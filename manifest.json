@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Manifest Parser",
+  "description": "Parse manifest files from liquidation retail websites into unified CSV format",
+  "version": "1.0.0",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "storage",
+    "identity",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.bstock.com/*",
+    "*://*.bstockauctions.com/*",
+    "*://*.techliquidators.com/*",
+    "*://*.amazon.com/*",
+    "*://*.s3.amazonaws.com/*",
+    "https://sheets.googleapis.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "663454025753-hv2icekthq6uuc2cf8i6glt5el5mac1v.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets.readonly"
+    ]
+  },
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.bstock.com/*",
+        "*://*.bstockauctions.com/*"
+      ],
+      "js": ["src/content/sites/bstock.ts"]
+    },
+    {
+      "matches": [
+        "*://*.techliquidators.com/*"
+      ],
+      "js": ["src/content/sites/techliquidators.ts"]
+    },
+    {
+      "matches": [
+        "*://*.amazon.com/*"
+      ],
+      "js": ["src/content/sites/amazon.ts"]
+    }
+  ]
+}

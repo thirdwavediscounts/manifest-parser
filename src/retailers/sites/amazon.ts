@@ -1,0 +1,200 @@
+/**
+ * Amazon Retailer Module
+ *
+ * Amazon liquidation pages use blob interception for manifest downloads.
+ * The "Download CSV" link has href="#" and triggers JavaScript to create a blob.
+ */
+
+import type { RetailerModule } from '../types'
+
+export const amazonRetailer: RetailerModule = {
+  id: 'amazon',
+  displayName: 'Amazon',
+
+  urlPatterns: [/amazon\.com/i],
+
+  downloadStrategy: 'blob-intercept',
+
+  downloadButtonConfig: {
+    keywords: ['download csv', 'download manifest', 'download inventory', 'download'],
+    selectors: ['a[href="#"]'],
+  },
+
+  matches(url: string): boolean {
+    return this.urlPatterns.some((pattern) => pattern.test(url))
+  },
+
+  needsTabProcessing(url: string): boolean {
+    const lowerUrl = url.toLowerCase()
+
+    // Direct file downloads don't need tab processing
+    if (lowerUrl.endsWith('.csv') || lowerUrl.endsWith('.xlsx') || lowerUrl.endsWith('.xls')) {
+      return false
+    }
+
+    // Amazon liquidation product pages need tab processing
+    if (lowerUrl.includes('amazon.com/dp/') || lowerUrl.includes('amazon.com/gp/')) {
+      return true
+    }
+
+    return true
+  },
+
+  /**
+   * Extract metadata from Amazon page
+   * Runs in ISOLATED world
+   */
+  extractMetadata: function () {
+    let listingName = 'Amazon Listing'
+    let retailer = 'Amazon'
+
+    // Method 1: Try #productTitle (standard Amazon product pages)
+    const productTitle = document.getElementById('productTitle')
+    if (productTitle?.textContent) {
+      listingName = productTitle.textContent.trim().substring(0, 100)
+    } else {
+      // Method 2: Use page title (most reliable for liquidation pages)
+      // Format: "Amazon.com: 161 Units (Est 1 pallets) - ... : Electronics"
+      const title = document.title
+
+      // Remove "Amazon.com: " prefix if present
+      let cleanTitle = title.replace(/^Amazon\.com:\s*/i, '')
+
+      // Remove " : Category" suffix (e.g., " : Electronics")
+      const lastColonIndex = cleanTitle.lastIndexOf(' : ')
+      if (lastColonIndex > 0) {
+        cleanTitle = cleanTitle.substring(0, lastColonIndex)
+      }
+
+      listingName = cleanTitle.trim().substring(0, 100) || 'Amazon Listing'
+    }
+
+    // Detect Amazon Direct:
+    // 1. Titles with "X Units" pattern (e.g., "161 Units", "204 Units")
+    // 2. Page has "Lot Manifest" section
+    const hasUnitsPattern = /\d+\s*units/i.test(listingName)
+    const hasLotManifest = document.body.textContent?.toLowerCase().includes('lot manifest')
+
+    if (hasUnitsPattern || hasLotManifest) {
+      retailer = 'Amazon Direct'
+    }
+
+    return {
+      retailer,
+      listingName,
+      auctionEndTime: null, // Amazon doesn't have auction end times
+    }
+  },
+
+  /**
+   * Download manifest from Amazon
+   * Uses blob interception - "Download CSV" link has href="#" and triggers JS
+   * Runs in MAIN world
+   */
+  downloadManifest: function () {
+    return new Promise((resolve) => {
+      const originalCreateObjectURL = URL.createObjectURL
+      const originalCreateElement = document.createElement.bind(document)
+      let capturedBlob: Blob | null = null
+      let cleanupCalled = false
+      let fakeAnchor: HTMLAnchorElement | null = null
+
+      const keywords = ['download csv', 'download manifest', 'csv', 'manifest']
+
+      // Intercept URL.createObjectURL to capture blobs
+      URL.createObjectURL = function (obj: Blob | MediaSource): string {
+        if (obj instanceof Blob) {
+          console.log('[Amazon] Intercepted blob:', obj.type, obj.size)
+          capturedBlob = obj
+        }
+        return originalCreateObjectURL.call(URL, obj)
+      }
+
+      // Intercept document.createElement to block automatic downloads
+      document.createElement = function (
+        tagName: string,
+        options?: ElementCreationOptions
+      ): HTMLElement {
+        const element = originalCreateElement(tagName, options)
+        if (tagName.toLowerCase() === 'a') {
+          fakeAnchor = element as HTMLAnchorElement
+          fakeAnchor.click = function () {
+            console.log('[Amazon] Blocked download click, href:', fakeAnchor?.href?.substring(0, 50))
+            // Don't call original click - this prevents the browser download
+          }
+        }
+        return element
+      } as typeof document.createElement
+
+      const cleanup = () => {
+        if (cleanupCalled) return
+        cleanupCalled = true
+        URL.createObjectURL = originalCreateObjectURL
+        document.createElement = originalCreateElement
+
+        if (capturedBlob) {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const base64 = reader.result as string
+            const base64Data = base64.split(',')[1] || base64
+            let type = capturedBlob!.type.toLowerCase()
+            if (!type || type === 'application/octet-stream') type = 'csv'
+            else if (type.includes('csv') || type.includes('text')) type = 'csv'
+            else if (type.includes('spreadsheetml') || type.includes('xlsx')) type = 'xlsx'
+            else if (type.includes('ms-excel')) type = 'xls'
+            else type = 'csv'
+            console.log(`[Amazon] Captured blob: ${type}, ${base64Data.length} chars`)
+            resolve({ data: base64Data, type: type as 'csv' | 'xlsx' | 'xls' })
+          }
+          reader.onerror = () => {
+            console.error('[Amazon] FileReader error')
+            resolve({ data: null, type: null })
+          }
+          reader.readAsDataURL(capturedBlob)
+        } else {
+          console.log('[Amazon] No blob captured')
+          resolve({ data: null, type: null })
+        }
+      }
+
+      // Timeout after 6 seconds
+      const DOWNLOAD_TIMEOUT_MS = 6000
+      const timeoutId = setTimeout(() => {
+        console.log('[Amazon] Download timeout')
+        cleanup()
+      }, DOWNLOAD_TIMEOUT_MS)
+
+      // Watch for blob capture
+      const checkInterval = setInterval(() => {
+        if (capturedBlob) {
+          clearInterval(checkInterval)
+          clearTimeout(timeoutId)
+          setTimeout(cleanup, 300) // Small delay to ensure blob is fully captured
+        }
+      }, 100)
+
+      // Find and click the download button/link
+      // Amazon uses anchor tags with href="#" that trigger JS download
+      const allClickables = Array.from(
+        document.querySelectorAll('a, button, [role="button"]')
+      ) as HTMLElement[]
+
+      for (const el of allClickables) {
+        const text = (el.textContent || '').toLowerCase().trim()
+        for (const keyword of keywords) {
+          if (text.includes(keyword)) {
+            console.log('[Amazon] Clicking download element:', text)
+            el.click()
+            return // Exit - we clicked, now wait for blob
+          }
+        }
+      }
+
+      // No download element found
+      console.log('[Amazon] No download button/link found')
+      clearInterval(checkInterval)
+      clearTimeout(timeoutId)
+      resolve({ data: null, type: null })
+    })
+  },
+}
