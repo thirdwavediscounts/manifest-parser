@@ -10,7 +10,9 @@
     "identity",
     "tabs",
     "scripting",
-    "proxy"
+    "proxy",
+    "webRequest",
+    "webRequestAuthProvider"
   ],
   "host_permissions": [
     "*://*.bstock.com/*",

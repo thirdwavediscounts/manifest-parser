@@ -142,6 +142,8 @@ const elements = {
   proxyEnabled: document.getElementById('proxy-enabled') as HTMLInputElement,
   proxyHost: document.getElementById('proxy-host') as HTMLInputElement,
   proxyPort: document.getElementById('proxy-port') as HTMLInputElement,
+  proxyUsername: document.getElementById('proxy-username') as HTMLInputElement,
+  proxyPassword: document.getElementById('proxy-password') as HTMLInputElement,
   saveProxyBtn: document.getElementById('save-proxy-btn') as HTMLButtonElement,
   proxyStatus: document.getElementById('proxy-status') as HTMLParagraphElement,
 }
@@ -284,9 +286,12 @@ async function loadProxySettings(): Promise<void> {
     elements.proxyEnabled.checked = settings.enabled
     elements.proxyHost.value = settings.host
     elements.proxyPort.value = settings.port.toString()
+    elements.proxyUsername.value = settings.username || ''
+    elements.proxyPassword.value = settings.password || ''
 
     if (settings.enabled && settings.host) {
-      elements.proxyStatus.textContent = `Proxy active: ${settings.host}:${settings.port}`
+      const authInfo = settings.username ? ' (with auth)' : ''
+      elements.proxyStatus.textContent = `Proxy active: ${settings.host}:${settings.port}${authInfo}`
       elements.proxyStatus.className = 'help-text success'
     } else {
       elements.proxyStatus.textContent = ''
@@ -300,10 +305,15 @@ async function loadProxySettings(): Promise<void> {
  * Handle save proxy settings
  */
 async function handleSaveProxy(): Promise<void> {
+  const username = elements.proxyUsername.value.trim()
+  const password = elements.proxyPassword.value
+
   const settings: ProxySettings = {
     enabled: elements.proxyEnabled.checked,
     host: elements.proxyHost.value.trim(),
     port: parseInt(elements.proxyPort.value, 10) || 8080,
+    username: username || undefined,
+    password: password || undefined,
     sites: ['techliquidators.com'],
   }
 
@@ -311,7 +321,8 @@ async function handleSaveProxy(): Promise<void> {
     await saveProxySettings(settings)
 
     if (settings.enabled && settings.host) {
-      elements.proxyStatus.textContent = `Proxy saved: ${settings.host}:${settings.port}`
+      const authInfo = settings.username ? ' (with auth)' : ''
+      elements.proxyStatus.textContent = `Proxy saved: ${settings.host}:${settings.port}${authInfo}`
       elements.proxyStatus.className = 'help-text success'
     } else {
       elements.proxyStatus.textContent = 'Proxy disabled'

@@ -123,4 +123,54 @@ export async function initializeProxy(): Promise<void> {
   if (settings.enabled && settings.host) {
     await applyProxy(settings)
   }
+
+  // Set up auth handler for proxy authentication
+  setupProxyAuthHandler()
+}
+
+/**
+ * Set up handler for proxy authentication requests
+ */
+function setupProxyAuthHandler(): void {
+  // Remove existing listener if any
+  if (chrome.webRequest.onAuthRequired.hasListener(handleProxyAuth)) {
+    chrome.webRequest.onAuthRequired.removeListener(handleProxyAuth)
+  }
+
+  // Add auth handler
+  chrome.webRequest.onAuthRequired.addListener(
+    handleProxyAuth,
+    { urls: ['<all_urls>'] },
+    ['asyncBlocking']
+  )
+}
+
+/**
+ * Handle proxy authentication requests
+ */
+async function handleProxyAuth(
+  details: chrome.webRequest.WebAuthenticationChallengeDetails
+): Promise<chrome.webRequest.BlockingResponse> {
+  // Only handle proxy auth, not server auth
+  if (!details.isProxy) {
+    return {}
+  }
+
+  try {
+    const settings = await getProxySettings()
+
+    if (settings.username && settings.password) {
+      console.log('[Proxy] Providing auth credentials for proxy')
+      return {
+        authCredentials: {
+          username: settings.username,
+          password: settings.password,
+        },
+      }
+    }
+  } catch (error) {
+    console.error('[Proxy] Error getting auth credentials:', error)
+  }
+
+  return {}
 }
