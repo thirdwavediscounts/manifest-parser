@@ -50,11 +50,13 @@ export const amazonRetailer: RetailerModule = {
 
     // Method 1: Try #productTitle (standard Amazon product pages)
     const productTitle = document.getElementById('productTitle')
+    let rawTitle = ''
+
     if (productTitle?.textContent) {
-      listingName = productTitle.textContent.trim().substring(0, 100)
+      rawTitle = productTitle.textContent.trim()
     } else {
       // Method 2: Use page title (most reliable for liquidation pages)
-      // Format: "Amazon.com: 161 Units (Est 1 pallets) - ... : Electronics"
+      // Format: "Amazon.com: 161 Units (Est 1 pallets) - Returned Damaged- Pc, Electronics And Wireless lot : Electronics"
       const title = document.title
 
       // Remove "Amazon.com: " prefix if present
@@ -66,23 +68,96 @@ export const amazonRetailer: RetailerModule = {
         cleanTitle = cleanTitle.substring(0, lastColonIndex)
       }
 
-      listingName = cleanTitle.trim().substring(0, 100) || 'Amazon Listing'
+      rawTitle = cleanTitle.trim()
     }
 
-    // Detect Amazon Direct:
-    // 1. Titles with "X Units" pattern (e.g., "161 Units", "204 Units")
-    // 2. Page has "Lot Manifest" section
-    const hasUnitsPattern = /\d+\s*units/i.test(listingName)
+    // Detect Amazon Direct and format listing name
+    // Title format: "161 Units (Est 1 pallets) - Returned Damaged- Pc, Electronics And Wireless lot"
+    const unitsMatch = rawTitle.match(/(\d+)\s*Units/i)
     const hasLotManifest = document.body.textContent?.toLowerCase().includes('lot manifest')
 
-    if (hasUnitsPattern || hasLotManifest) {
+    if (unitsMatch || hasLotManifest) {
       retailer = 'Amazon Direct'
+      listingName = formatAmazonDirectListingName(rawTitle)
+    } else {
+      listingName = rawTitle.substring(0, 100) || 'Amazon Listing'
     }
 
     return {
       retailer,
       listingName,
       auctionEndTime: null, // Amazon doesn't have auction end times
+    }
+
+    /**
+     * Format Amazon Direct listing name
+     * Input: "161 Units (Est 1 pallets) - Returned Damaged- Pc, Electronics And Wireless lot"
+     * Output: "161 Units PC Electronics Wireless RD"
+     */
+    function formatAmazonDirectListingName(title: string): string {
+      // Extract units count
+      const unitsMatch = title.match(/(\d+)\s*Units/i)
+      const units = unitsMatch ? `${unitsMatch[1]} Units` : ''
+
+      // Extract condition and abbreviate
+      const conditionAbbrev = extractConditionAbbrev(title)
+
+      // Extract categories (between condition and "lot")
+      // Remove units part, pallet info, condition, and "lot"
+      let categories = title
+        .replace(/\d+\s*Units/i, '')
+        .replace(/\(Est\s*\d+\s*pallets?\)/i, '')
+        .replace(/Returned\s*Damaged/i, '')
+        .replace(/Returned/i, '')
+        .replace(/Damaged/i, '')
+        .replace(/New/i, '')
+        .replace(/Salvage/i, '')
+        .replace(/Used/i, '')
+        .replace(/\blot\b/gi, '')
+        .replace(/[-–—]/g, ' ')
+        .replace(/,/g, ' ')
+        .replace(/\bAnd\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      // Capitalize first letter of each word
+      categories = categories
+        .split(' ')
+        .filter((w) => w.length > 0)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ')
+
+      // Combine: "161 Units PC Electronics Wireless RD"
+      const parts = [units, categories, conditionAbbrev].filter((p) => p.length > 0)
+      return parts.join(' ')
+    }
+
+    /**
+     * Extract condition abbreviation from title
+     */
+    function extractConditionAbbrev(title: string): string {
+      const lowerTitle = title.toLowerCase()
+
+      if (lowerTitle.includes('returned') && lowerTitle.includes('damaged')) {
+        return 'RD'
+      }
+      if (lowerTitle.includes('returned')) {
+        return 'R'
+      }
+      if (lowerTitle.includes('damaged')) {
+        return 'D'
+      }
+      if (lowerTitle.includes('salvage')) {
+        return 'S'
+      }
+      if (lowerTitle.includes('new')) {
+        return 'N'
+      }
+      if (lowerTitle.includes('used')) {
+        return 'U'
+      }
+
+      return ''
     }
   },
 
