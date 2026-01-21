@@ -38,6 +38,7 @@ interface PopupState {
   urls: UrlItem[]
   uploadedFiles: File[]
   isProcessing: boolean
+  isCancelled: boolean
   lastZipBlob: Blob | null
   results: {
     files: number
@@ -58,6 +59,7 @@ const state: PopupState = {
   urls: [],
   uploadedFiles: [],
   isProcessing: false,
+  isCancelled: false,
   lastZipBlob: null,
   results: { files: 0, items: 0, retailValue: 0 },
   processingProgress: null,
@@ -127,6 +129,7 @@ const elements = {
   progressLabel: document.getElementById('progress-label') as HTMLSpanElement,
   progressPercent: document.getElementById('progress-percent') as HTMLSpanElement,
   progressDetail: document.getElementById('progress-detail') as HTMLParagraphElement,
+  cancelBtn: document.getElementById('cancel-btn') as HTMLButtonElement,
 
   // Results
   resultsSection: document.getElementById('results-section') as HTMLElement,
@@ -215,6 +218,7 @@ function setupEventListeners(): void {
 
   // Process
   elements.processBtn.addEventListener('click', handleProcess)
+  elements.cancelBtn.addEventListener('click', handleCancel)
 
   // Results
   elements.downloadAgainBtn.addEventListener('click', handleDownloadAgain)
@@ -508,6 +512,7 @@ function updateProcessButton(): void {
  */
 async function handleProcess(): Promise<void> {
   state.isProcessing = true
+  state.isCancelled = false
   updateProcessButton()
   showProgress()
 
@@ -524,6 +529,11 @@ async function handleProcess(): Promise<void> {
   try {
     // Process URLs from sheet - save raw data without parsing
     for (const urlItem of selectedUrls) {
+      // Check for cancellation
+      if (state.isCancelled) {
+        console.log('[ManifestParser] Processing cancelled by user')
+        break
+      }
       // Save progress state for persistence
       state.processingProgress = {
         current: processed,
@@ -589,6 +599,12 @@ async function handleProcess(): Promise<void> {
 
     // Process uploaded files - these still need parsing for stats
     for (const file of state.uploadedFiles) {
+      // Check for cancellation
+      if (state.isCancelled) {
+        console.log('[ManifestParser] Processing cancelled by user')
+        break
+      }
+
       updateProgress((processed / totalItems) * 100, `Parsing ${file.name}...`)
 
       try {
@@ -606,6 +622,13 @@ async function handleProcess(): Promise<void> {
       }
 
       processed++
+    }
+
+    // Check if cancelled before creating ZIP
+    if (state.isCancelled) {
+      updateProgress(0, 'Cancelled')
+      hideProgress()
+      return
     }
 
     updateProgress(95, 'Creating ZIP file...')
@@ -665,6 +688,23 @@ async function handleProcess(): Promise<void> {
     await saveState()
     updateProcessButton()
   }
+}
+
+/**
+ * Handle cancel button click
+ */
+function handleCancel(): void {
+  state.isCancelled = true
+  state.isProcessing = false
+  state.processingProgress = null
+  updateProgress(0, 'Cancelling...')
+  console.log('[ManifestParser] Cancel requested')
+
+  // Hide progress after a brief delay
+  setTimeout(() => {
+    hideProgress()
+    updateProcessButton()
+  }, 500)
 }
 
 /**
