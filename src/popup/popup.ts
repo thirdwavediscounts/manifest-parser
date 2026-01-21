@@ -1069,6 +1069,7 @@ async function processUrlInTab(url: string): Promise<TabProcessResult> {
 
 /**
  * Generate filename in format: RETAILER_ListingName_AuctionEndTime.csv
+ * Exception: AMZD (Amazon Direct) doesn't include date
  */
 function generateListingFilename(
   retailer: string,
@@ -1084,6 +1085,11 @@ function generateListingFilename(
 
   const sanitizedRetailer = sanitize(retailer)
   const sanitizedListing = sanitize(listingName)
+
+  // AMZD (Amazon Direct) doesn't include date in filename
+  if (retailer.toUpperCase() === 'AMZD') {
+    return `${sanitizedRetailer}_${sanitizedListing}.csv`
+  }
 
   // Format auction end time
   let timeStr = ''
