@@ -20,6 +20,11 @@ import {
   type RawZipEntry,
   type ZipEntry,
 } from '../utils/zip-export'
+import {
+  getProxySettings,
+  saveProxySettings,
+  type ProxySettings,
+} from '../utils/proxy-config'
 
 interface UrlItem {
   url: string
@@ -130,6 +135,15 @@ const elements = {
   resultValue: document.getElementById('result-value') as HTMLSpanElement,
   downloadAgainBtn: document.getElementById('download-again-btn') as HTMLButtonElement,
   resetBtn: document.getElementById('reset-btn') as HTMLButtonElement,
+
+  // Proxy settings
+  proxySection: document.getElementById('proxy-section') as HTMLElement,
+  toggleProxy: document.getElementById('toggle-proxy') as HTMLButtonElement,
+  proxyEnabled: document.getElementById('proxy-enabled') as HTMLInputElement,
+  proxyHost: document.getElementById('proxy-host') as HTMLInputElement,
+  proxyPort: document.getElementById('proxy-port') as HTMLInputElement,
+  saveProxyBtn: document.getElementById('save-proxy-btn') as HTMLButtonElement,
+  proxyStatus: document.getElementById('proxy-status') as HTMLParagraphElement,
 }
 
 /**
@@ -139,6 +153,7 @@ async function init(): Promise<void> {
   setupEventListeners()
   await loadState()
   await checkAuthState()
+  await loadProxySettings()
 
   // Restore UI from loaded state
   if (state.sheetUrl) {
@@ -202,6 +217,16 @@ function setupEventListeners(): void {
   // Results
   elements.downloadAgainBtn.addEventListener('click', handleDownloadAgain)
   elements.resetBtn.addEventListener('click', handleReset)
+
+  // Proxy settings toggle
+  elements.toggleProxy.addEventListener('click', () => {
+    elements.proxySection.classList.toggle('collapsed')
+    const content = elements.proxySection.querySelector('.section-content')
+    content?.classList.toggle('hidden')
+  })
+
+  // Proxy save button
+  elements.saveProxyBtn.addEventListener('click', handleSaveProxy)
 }
 
 /**
@@ -248,6 +273,54 @@ async function handleSignOut(): Promise<void> {
   updateAuthUI()
   updateUrlListUI()
   updateProcessButton()
+}
+
+/**
+ * Load proxy settings and update UI
+ */
+async function loadProxySettings(): Promise<void> {
+  try {
+    const settings = await getProxySettings()
+    elements.proxyEnabled.checked = settings.enabled
+    elements.proxyHost.value = settings.host
+    elements.proxyPort.value = settings.port.toString()
+
+    if (settings.enabled && settings.host) {
+      elements.proxyStatus.textContent = `Proxy active: ${settings.host}:${settings.port}`
+      elements.proxyStatus.className = 'help-text success'
+    } else {
+      elements.proxyStatus.textContent = ''
+    }
+  } catch (error) {
+    console.error('[ManifestParser] Failed to load proxy settings:', error)
+  }
+}
+
+/**
+ * Handle save proxy settings
+ */
+async function handleSaveProxy(): Promise<void> {
+  const settings: ProxySettings = {
+    enabled: elements.proxyEnabled.checked,
+    host: elements.proxyHost.value.trim(),
+    port: parseInt(elements.proxyPort.value, 10) || 8080,
+    sites: ['techliquidators.com'],
+  }
+
+  try {
+    await saveProxySettings(settings)
+
+    if (settings.enabled && settings.host) {
+      elements.proxyStatus.textContent = `Proxy saved: ${settings.host}:${settings.port}`
+      elements.proxyStatus.className = 'help-text success'
+    } else {
+      elements.proxyStatus.textContent = 'Proxy disabled'
+      elements.proxyStatus.className = 'help-text'
+    }
+  } catch (error) {
+    elements.proxyStatus.textContent = `Error: ${error instanceof Error ? error.message : 'Failed to save'}`
+    elements.proxyStatus.className = 'help-text error'
+  }
 }
 
 /**

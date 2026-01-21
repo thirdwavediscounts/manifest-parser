@@ -89,6 +89,36 @@
         </div>
       </section>
 
+      <!-- Proxy Settings -->
+      <section id="proxy-section" class="section collapsed">
+        <button class="section-toggle" id="toggle-proxy">
+          <span>Proxy Settings (TechLiquidators)</span>
+          <span class="toggle-icon">▼</span>
+        </button>
+        <div class="section-content hidden">
+          <div class="proxy-form">
+            <label class="checkbox-label">
+              <input type="checkbox" id="proxy-enabled">
+              Enable proxy for TechLiquidators
+            </label>
+            <div class="input-row">
+              <div class="input-field">
+                <label for="proxy-host">Host</label>
+                <input type="text" id="proxy-host" placeholder="proxy.example.com" class="text-input">
+              </div>
+              <div class="input-field input-field-small">
+                <label for="proxy-port">Port</label>
+                <input type="number" id="proxy-port" placeholder="8080" value="8080" class="text-input">
+              </div>
+            </div>
+            <button id="save-proxy-btn" class="btn btn-secondary">
+              Save Proxy Settings
+            </button>
+            <p id="proxy-status" class="help-text"></p>
+          </div>
+        </div>
+      </section>
+
       <!-- Actions -->
       <section id="actions" class="section">
         <button id="process-btn" class="btn btn-primary" disabled>

@@ -389,3 +389,49 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
   background: #999;
 }
+
+/* Proxy Settings */
+.proxy-form {
+  margin-top: 12px;
+}
+
+.proxy-form .checkbox-label {
+  margin-bottom: 12px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.input-field {
+  flex: 1;
+}
+
+.input-field-small {
+  flex: 0 0 80px;
+}
+
+.input-field label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.input-field .text-input {
+  width: 100%;
+}
+
+#proxy-status {
+  margin-top: 8px;
+}
+
+#proxy-status.success {
+  color: #2e7d32;
+}
+
+#proxy-status.error {
+  color: #c62828;
+}

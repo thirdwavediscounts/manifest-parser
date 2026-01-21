@@ -2,6 +2,12 @@ import type { ExtensionMessage, ManifestItem } from '../parsers/types'
 import { parseManifestData } from '../parsers/base-parser'
 import { readCsv } from '../parsers/csv-reader'
 import { readXlsx } from '../parsers/xlsx-reader'
+import { initializeProxy } from '../utils/proxy-config'
+
+// Initialize proxy settings on service worker start
+initializeProxy().catch((error) => {
+  console.error('[ManifestParser:SW] Failed to initialize proxy:', error)
+})
 
 /**
  * Listen for messages from popup and content scripts

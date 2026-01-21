@@ -9,7 +9,8 @@
     "storage",
     "identity",
     "tabs",
-    "scripting"
+    "scripting",
+    "proxy"
   ],
   "host_permissions": [
     "*://*.bstock.com/*",
