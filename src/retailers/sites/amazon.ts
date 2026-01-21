@@ -77,7 +77,7 @@ export const amazonRetailer: RetailerModule = {
     const hasLotManifest = document.body.textContent?.toLowerCase().includes('lot manifest')
 
     if (unitsMatch || hasLotManifest) {
-      retailer = 'Amazon Direct'
+      retailer = 'AMZD'
       listingName = formatAmazonDirectListingName(rawTitle)
     } else {
       listingName = rawTitle.substring(0, 100) || 'Amazon Listing'
