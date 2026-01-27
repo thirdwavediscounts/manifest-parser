@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** Phase 2 - Retailer Parsing Improvements
+**Current focus:** Phase 2 - Standard Retailer Mappings
 
 ## Current Position
 
-Phase: 1 of 6 (Unified Format Foundation) - COMPLETE
-Plan: 2 of 2 in phase - COMPLETE
-Status: Phase 1 complete, ready for Phase 2
-Last activity: 2026-01-27 - Completed 01-02-PLAN.md (Unified Format Integration)
+Phase: 2 of 6 (Standard Retailer Mappings)
+Plan: 1 of 3 in phase - COMPLETE
+Status: In progress
+Last activity: 2026-01-27 - Completed 02-01-PLAN.md (Retailer Field Mappings)
 
-Progress: [##........] 18%
+Progress: [###.......] 27%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 3.5 minutes
-- Total execution time: 7 minutes
+- Total plans completed: 3
+- Average duration: 3.3 minutes
+- Total execution time: 10 minutes
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Unified Format Foundation | 2/2 | 7 min | 3.5 min |
+| 2. Standard Retailer Mappings | 1/3 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (3 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -51,6 +52,9 @@ Recent decisions affecting current work:
 - [D01-02-01] Unified output is default; raw file functions preserved for Phase 6 toggle
 - [D01-02-02] Parse manifest via PARSE_FILE message to background worker
 - [D01-02-03] Local uploads use 'local-upload' as auction_url
+- [D02-01-01] NULL_VALUES stored lowercase for consistent comparison
+- [D02-01-02] extractField exported for testing but intended as internal helper
+- [D02-01-03] Default config provided for unknown retailers
 
 ### Pending Todos
 
@@ -63,5 +67,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 01-02-PLAN.md (Phase 1 complete)
-Resume file: .planning/phases/02-retailer-parsing/02-01-PLAN.md
+Stopped at: Completed 02-01-PLAN.md
+Resume file: .planning/phases/02-standard-retailer-mappings/02-02-PLAN.md
