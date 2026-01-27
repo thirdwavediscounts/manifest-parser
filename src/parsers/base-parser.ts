@@ -93,6 +93,11 @@ export function parseManifestData(
     return []
   }
 
+  // AMZD requires special handling due to misaligned columns
+  if (site === 'amzd') {
+    return parseAmzdManifest(rawData, site, filename)
+  }
+
   const mapping = getFieldMapping(site)
   const headers = Object.keys(rawData[0])
   const columnMap = mapColumns(headers, mapping)
