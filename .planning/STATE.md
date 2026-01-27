@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 ## Current Position
 
-Phase: 2 of 6 (Standard Retailer Mappings) - COMPLETE
-Plan: 2 of 2 in phase - COMPLETE
-Status: Phase 2 complete, ready for Phase 3
-Last activity: 2026-01-27 - Completed Phase 2 (Standard Retailer Mappings)
+Phase: 3 of 6 (AMZD Special Handling)
+Plan: 1 of 1 in phase - COMPLETE
+Status: Phase 3 complete
+Last activity: 2026-01-27 - Completed 03-01-PLAN.md (AMZD Parser Core Functions)
 
-Progress: [####......] 36%
+Progress: [#####.....] 45%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 4.3 minutes
-- Total execution time: 17 minutes
+- Total plans completed: 5
+- Average duration: 4.0 minutes
+- Total execution time: 20 minutes
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [####......] 36%
 |-------|-------|-------|----------|
 | 1. Unified Format Foundation | 2/2 | 7 min | 3.5 min |
 | 2. Standard Retailer Mappings | 2/2 | 10 min | 5.0 min |
+| 3. AMZD Special Handling | 1/1 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (3 min), 02-02 (7 min)
-- Trend: Slightly longer (integration tests added)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (3 min), 02-02 (7 min), 03-01 (3 min)
+- Trend: TDD tasks execute efficiently
 
 *Updated after each plan completion*
 
@@ -58,6 +59,9 @@ Recent decisions affecting current work:
 - [D02-02-01] Strip trailing commas in isNullValue for B-Stock CSV format
 - [D02-02-02] Expanded DEFAULT_CONFIG with more column variations
 - [D02-02-03] Removed defaultFieldMapping in favor of getRetailerFieldConfig
+- [D03-01-01] ASIN pattern B0XXXXXXXXX (10 chars, uppercase) for Amazon identification
+- [D03-01-02] Right-anchor positions: qty at -3, price at -2 from end
+- [D03-01-03] Banker's rounding (toFixed) for 2-decimal price precision
 
 ### Pending Todos
 
@@ -70,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed Phase 2 (Standard Retailer Mappings)
-Resume file: .planning/phases/03-amzd-special-handling/03-01-PLAN.md
+Stopped at: Completed Phase 3 (AMZD Special Handling)
+Resume file: None
