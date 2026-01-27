@@ -106,10 +106,10 @@ Plans:
   2. When "Raw files" selected, original CSV/XLSX downloaded as before
   3. When "Unified format" selected, processed CSV with unified columns downloaded
   4. User preference persisted across popup sessions
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: Add format toggle to popup UI and wire up processing path
+- [ ] 06-01-PLAN.md — Add format toggle to popup UI and wire processing path
 
 ## Progress
 
