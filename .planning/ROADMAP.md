@@ -28,11 +28,11 @@ Transform the existing Chrome extension from raw manifest downloads to producing
   2. auction_url, bid_price, shipping_fee columns are populated only on the first row (empty on subsequent rows)
   3. Each manifest file produces a separate CSV (not combined)
   4. Existing raw file download continues to work (no breaking changes)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Define unified output interface and CSV generation
-- [ ] 01-02: Integrate unified format into download pipeline
+- [ ] 01-01-PLAN.md — TDD: Core unified format types and transformation
+- [ ] 01-02-PLAN.md — Integrate unified format into download pipeline
 
 ### Phase 2: Standard Retailer Mappings
 **Goal**: Map 10 retailers with standard column patterns to unified format
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Unified Format Foundation | 0/2 | Not started | - |
+| 1. Unified Format Foundation | 0/2 | Planned | - |
 | 2. Standard Retailer Mappings | 0/2 | Not started | - |
 | 3. AMZD Special Handling | 0/2 | Not started | - |
 | 4. Data Processing Pipeline | 0/2 | Not started | - |
