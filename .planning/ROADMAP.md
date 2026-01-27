@@ -44,11 +44,11 @@ Plans:
   3. TL manifest UPC becomes item_number, Product Name becomes product_name, Orig. Retail becomes unit_retail
   4. All 10 retailers (ACE, AMZ, ATT, COSTCO, BY, JCP, QVC, RC, TGT, TL) produce unified output when processed
   5. ATT manifests with "not available" UPC result in blank item_number
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Implement field mapping configuration for all 10 retailers
-- [ ] 02-02: Integrate retailer mappings with unified transformation
+- [ ] 02-01-PLAN.md - TDD: Retailer field mapping configuration with null-value handling
+- [ ] 02-02-PLAN.md - Integrate retailer mappings with parsing pipeline
 
 ### Phase 3: AMZD Special Handling
 **Goal**: Parse Amazon Direct manifests with misaligned columns correctly
