@@ -16,17 +16,17 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 ### Per-Retailer Field Mapping
 
-- [ ] **MAP-01**: ACE mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-02**: AMZ mapping — item_number=ASIN, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-01**: ACE mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-02**: AMZ mapping — item_number=ASIN, product_name=Item Description, unit_retail=Unit Retail
 - [ ] **MAP-03**: AMZD mapping — item_number=ASIN, product_name=Item Title, unit_retail=Lot item price x 4.5
-- [ ] **MAP-04**: ATT mapping — item_number=UPC (blank if "not available"), product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-05**: COSTCO mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-06**: BY mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-07**: JCP mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-08**: QVC mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-09**: RC mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-10**: TGT mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-11**: TL mapping — item_number=UPC, product_name=Product Name, unit_retail=Orig. Retail
+- [x] **MAP-04**: ATT mapping — item_number=UPC (blank if "not available"), product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-05**: COSTCO mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-06**: BY mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-07**: JCP mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-08**: QVC mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-09**: RC mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-10**: TGT mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
+- [x] **MAP-11**: TL mapping — item_number=UPC, product_name=Product Name, unit_retail=Orig. Retail
 
 ### Auction Metadata Extraction
 
@@ -85,17 +85,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-02 | Phase 1 | Complete |
 | OUT-03 | Phase 6 | Pending |
 | OUT-04 | Phase 1 | Complete |
-| MAP-01 | Phase 2 | Pending |
-| MAP-02 | Phase 2 | Pending |
+| MAP-01 | Phase 2 | Complete |
+| MAP-02 | Phase 2 | Complete |
 | MAP-03 | Phase 3 | Pending |
-| MAP-04 | Phase 2 | Pending |
-| MAP-05 | Phase 2 | Pending |
-| MAP-06 | Phase 2 | Pending |
-| MAP-07 | Phase 2 | Pending |
-| MAP-08 | Phase 2 | Pending |
-| MAP-09 | Phase 2 | Pending |
-| MAP-10 | Phase 2 | Pending |
-| MAP-11 | Phase 2 | Pending |
+| MAP-04 | Phase 2 | Complete |
+| MAP-05 | Phase 2 | Complete |
+| MAP-06 | Phase 2 | Complete |
+| MAP-07 | Phase 2 | Complete |
+| MAP-08 | Phase 2 | Complete |
+| MAP-09 | Phase 2 | Complete |
+| MAP-10 | Phase 2 | Complete |
+| MAP-11 | Phase 2 | Complete |
 | META-01 | Phase 5 | Pending |
 | META-02 | Phase 5 | Pending |
 | META-03 | Phase 5 | Pending |

@@ -11,7 +11,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Unified Format Foundation** - Establish unified CSV structure and transformation pipeline
-- [ ] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
+- [x] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
 - [ ] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
 - [ ] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
 - [ ] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
@@ -47,8 +47,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - TDD: Retailer field mapping configuration with null-value handling
-- [ ] 02-02-PLAN.md - Integrate retailer mappings with parsing pipeline
+- [x] 02-01-PLAN.md - TDD: Retailer field mapping configuration with null-value handling
+- [x] 02-02-PLAN.md - Integrate retailer mappings with parsing pipeline
 
 ### Phase 3: AMZD Special Handling
 **Goal**: Parse Amazon Direct manifests with misaligned columns correctly
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Unified Format Foundation | 2/2 | Complete | 2026-01-27 |
-| 2. Standard Retailer Mappings | 0/2 | Not started | - |
+| 2. Standard Retailer Mappings | 2/2 | Complete | 2026-01-27 |
 | 3. AMZD Special Handling | 0/2 | Not started | - |
 | 4. Data Processing Pipeline | 0/2 | Not started | - |
 | 5. Auction Metadata Extraction | 0/2 | Not started | - |
