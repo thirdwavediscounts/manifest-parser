@@ -4,6 +4,8 @@ import {
   cleanRow,
   normalizeItemNumber,
   deduplicateRows,
+  sortRows,
+  processRows,
 } from '../../src/unified/processing'
 import type { UnifiedManifestRow } from '../../src/unified/types'
 
@@ -418,6 +420,286 @@ describe('deduplicateRows', () => {
       expect(result).toHaveLength(1)
       expect(result[0].qty).toBe(6)
       expect(result[0].item_number).toBe('0000ABC') // longest format
+    })
+  })
+})
+
+describe('sortRows', () => {
+  describe('primary sort by unit_retail descending', () => {
+    it('should sort by unit_retail in descending order (highest first)', () => {
+      const rows = [
+        createRow({ item_number: 'A', unit_retail: 50 }),
+        createRow({ item_number: 'B', unit_retail: 100 }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0].unit_retail).toBe(100)
+      expect(result[1].unit_retail).toBe(50)
+    })
+
+    it('should handle multiple items with different prices', () => {
+      const rows = [
+        createRow({ item_number: 'A', unit_retail: 25 }),
+        createRow({ item_number: 'B', unit_retail: 999 }),
+        createRow({ item_number: 'C', unit_retail: 100 }),
+        createRow({ item_number: 'D', unit_retail: 50 }),
+      ]
+      const result = sortRows(rows)
+      expect(result.map(r => r.unit_retail)).toEqual([999, 100, 50, 25])
+    })
+  })
+
+  describe('secondary sort by product_name ascending', () => {
+    it('should sort alphabetically by product_name when unit_retail is equal', () => {
+      const rows = [
+        createRow({ product_name: 'Banana', unit_retail: 100 }),
+        createRow({ product_name: 'Apple', unit_retail: 100 }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0].product_name).toBe('Apple')
+      expect(result[1].product_name).toBe('Banana')
+    })
+
+    it('should be case-insensitive for product_name comparison', () => {
+      const rows = [
+        createRow({ product_name: 'banana', unit_retail: 100 }),
+        createRow({ product_name: 'Apple', unit_retail: 100 }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0].product_name).toBe('Apple')
+      expect(result[1].product_name).toBe('banana')
+    })
+
+    it('should sort "apple" and "Apple" together', () => {
+      const rows = [
+        createRow({ product_name: 'cherry', unit_retail: 100 }),
+        createRow({ product_name: 'Apple', unit_retail: 100 }),
+        createRow({ product_name: 'apple pie', unit_retail: 100 }),
+      ]
+      const result = sortRows(rows)
+      // Apple < apple pie < cherry (case-insensitive)
+      expect(result[0].product_name).toBe('Apple')
+      expect(result[1].product_name).toBe('apple pie')
+      expect(result[2].product_name).toBe('cherry')
+    })
+  })
+
+  describe('zero/empty unit_retail at end', () => {
+    it('should place rows with unit_retail = 0 at the end', () => {
+      const rows = [
+        createRow({ item_number: 'A', unit_retail: 0 }),
+        createRow({ item_number: 'B', unit_retail: 50 }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0].unit_retail).toBe(50)
+      expect(result[1].unit_retail).toBe(0)
+    })
+
+    it('should keep multiple zero-value items at the end', () => {
+      const rows = [
+        createRow({ item_number: 'A', unit_retail: 0 }),
+        createRow({ item_number: 'B', unit_retail: 100 }),
+        createRow({ item_number: 'C', unit_retail: 0 }),
+        createRow({ item_number: 'D', unit_retail: 50 }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0].unit_retail).toBe(100)
+      expect(result[1].unit_retail).toBe(50)
+      expect(result[2].unit_retail).toBe(0)
+      expect(result[3].unit_retail).toBe(0)
+    })
+
+    it('should sort zero-value items by product_name among themselves', () => {
+      const rows = [
+        createRow({ product_name: 'Zebra', unit_retail: 0 }),
+        createRow({ product_name: 'Alpha', unit_retail: 0 }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0].product_name).toBe('Alpha')
+      expect(result[1].product_name).toBe('Zebra')
+    })
+  })
+
+  describe('stable sort and edge cases', () => {
+    it('should return empty array for empty input', () => {
+      const result = sortRows([])
+      expect(result).toEqual([])
+    })
+
+    it('should return same row for single item input', () => {
+      const rows = [createRow({ item_number: 'A', unit_retail: 100 })]
+      const result = sortRows(rows)
+      expect(result).toHaveLength(1)
+      expect(result[0].item_number).toBe('A')
+    })
+
+    it('should not mutate the original array', () => {
+      const rows = [
+        createRow({ unit_retail: 50 }),
+        createRow({ unit_retail: 100 }),
+      ]
+      const originalFirstRetail = rows[0].unit_retail
+      sortRows(rows)
+      expect(rows[0].unit_retail).toBe(originalFirstRetail)
+    })
+
+    it('should preserve all row data during sort', () => {
+      const rows = [
+        createRow({
+          item_number: 'ABC123',
+          product_name: 'Test Product',
+          qty: 5,
+          unit_retail: 29.99,
+          auction_url: 'https://example.com',
+          bid_price: '100',
+          shipping_fee: '25',
+        }),
+      ]
+      const result = sortRows(rows)
+      expect(result[0]).toEqual(rows[0])
+    })
+  })
+
+  describe('combined sorting scenarios', () => {
+    it('should correctly sort mixed prices and names', () => {
+      const rows = [
+        createRow({ product_name: 'Zebra', unit_retail: 50 }),
+        createRow({ product_name: 'Apple', unit_retail: 50 }),
+        createRow({ product_name: 'Mango', unit_retail: 100 }),
+        createRow({ product_name: 'Banana', unit_retail: 100 }),
+        createRow({ product_name: 'Cherry', unit_retail: 0 }),
+      ]
+      const result = sortRows(rows)
+
+      // First: unit_retail 100 (Banana < Mango alphabetically)
+      expect(result[0]).toMatchObject({ product_name: 'Banana', unit_retail: 100 })
+      expect(result[1]).toMatchObject({ product_name: 'Mango', unit_retail: 100 })
+
+      // Then: unit_retail 50 (Apple < Zebra alphabetically)
+      expect(result[2]).toMatchObject({ product_name: 'Apple', unit_retail: 50 })
+      expect(result[3]).toMatchObject({ product_name: 'Zebra', unit_retail: 50 })
+
+      // Last: unit_retail 0
+      expect(result[4]).toMatchObject({ product_name: 'Cherry', unit_retail: 0 })
+    })
+  })
+})
+
+describe('processRows', () => {
+  describe('pipeline composition', () => {
+    it('should apply clean, deduplicate, and sort in order', () => {
+      const rows = [
+        createRow({ item_number: '  ABC  ', product_name: '  Widget  ', unit_retail: 50 }),
+        createRow({ item_number: 'ABC', product_name: 'Widget 2', unit_retail: 100 }),
+        createRow({ item_number: 'DEF', product_name: 'Gadget', unit_retail: 75 }),
+      ]
+      const result = processRows(rows)
+
+      // Should have 2 rows (ABC duplicates merged)
+      expect(result).toHaveLength(2)
+
+      // Should be sorted by unit_retail descending
+      expect(result[0].unit_retail).toBeGreaterThanOrEqual(result[1].unit_retail)
+    })
+
+    it('should clean whitespace from fields', () => {
+      const rows = [
+        createRow({ item_number: ' ABC123 ', product_name: '  Test  ' }),
+      ]
+      const result = processRows(rows)
+      expect(result[0].item_number).toBe('ABC123')
+      expect(result[0].product_name).toBe('Test')
+    })
+
+    it('should deduplicate items with same item_number', () => {
+      const rows = [
+        createRow({ item_number: 'ABC', qty: 2 }),
+        createRow({ item_number: 'ABC', qty: 3 }),
+      ]
+      const result = processRows(rows)
+      expect(result).toHaveLength(1)
+      expect(result[0].qty).toBe(5) // Sum of quantities
+    })
+
+    it('should sort the final result by unit_retail descending', () => {
+      const rows = [
+        createRow({ item_number: 'A', unit_retail: 25 }),
+        createRow({ item_number: 'B', unit_retail: 100 }),
+        createRow({ item_number: 'C', unit_retail: 50 }),
+      ]
+      const result = processRows(rows)
+      expect(result.map(r => r.unit_retail)).toEqual([100, 50, 25])
+    })
+  })
+
+  describe('empty and single item cases', () => {
+    it('should return empty array for empty input', () => {
+      const result = processRows([])
+      expect(result).toEqual([])
+    })
+
+    it('should process single item correctly', () => {
+      const rows = [
+        createRow({ item_number: ' ABC ', product_name: ' Widget ' }),
+      ]
+      const result = processRows(rows)
+      expect(result).toHaveLength(1)
+      expect(result[0].item_number).toBe('ABC')
+      expect(result[0].product_name).toBe('Widget')
+    })
+  })
+
+  describe('full integration scenarios', () => {
+    it('should handle dirty duplicates with varying prices correctly', () => {
+      const rows = [
+        createRow({
+          item_number: '  00123  ',
+          product_name: ' Widget A ',
+          qty: 1,
+          unit_retail: 10,
+        }),
+        createRow({
+          item_number: '123',
+          product_name: 'Widget B (high qty)',
+          qty: 5,
+          unit_retail: 15,
+        }),
+        createRow({
+          item_number: '456',
+          product_name: ' Gadget ',
+          qty: 2,
+          unit_retail: 100,
+        }),
+      ]
+      const result = processRows(rows)
+
+      // Should have 2 rows (00123 and 123 merged)
+      expect(result).toHaveLength(2)
+
+      // First row should be Gadget (highest retail: 100)
+      expect(result[0].product_name).toBe('Gadget')
+      expect(result[0].unit_retail).toBe(100)
+
+      // Second row should be merged 123 items
+      // - qty = 1 + 5 = 6
+      // - unit_retail = max(10, 15) = 15
+      // - product_name from highest qty = "Widget B (high qty)"
+      // - item_number = longest = "00123"
+      expect(result[1].item_number).toBe('00123')
+      expect(result[1].qty).toBe(6)
+      expect(result[1].unit_retail).toBe(15)
+      expect(result[1].product_name).toBe('Widget B (high qty)')
+    })
+
+    it('should process rows with zero-value items at end', () => {
+      const rows = [
+        createRow({ item_number: 'A', unit_retail: 0 }),
+        createRow({ item_number: 'B', unit_retail: 50 }),
+        createRow({ item_number: 'C', unit_retail: 100 }),
+      ]
+      const result = processRows(rows)
+      expect(result[0].item_number).toBe('C')
+      expect(result[1].item_number).toBe('B')
+      expect(result[2].item_number).toBe('A')
     })
   })
 })
