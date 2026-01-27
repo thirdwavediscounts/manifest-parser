@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** Phase 6 Ready - Integration and Polish
+**Current focus:** Phase 6 - UI Integration (1/2 plans complete)
 
 ## Current Position
 
-Phase: 5 of 6 (Auction Metadata Extraction)
-Plan: 2 of 2 in phase
-Status: Phase complete
-Last activity: 2026-01-27 - Completed 05-02-PLAN.md (Metadata Integration into CSV Output)
+Phase: 6 of 6 (UI Integration)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-27 - Completed 06-01-PLAN.md (Format Toggle UI)
 
-Progress: [##########] 100% of Phase 5
+Progress: [###########-] 92% (11/12 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 3.6 minutes
-- Total execution time: 37 minutes
+- Total execution time: 41 minutes
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [##########] 100% of Phase 5
 | 3. AMZD Special Handling | 2/2 | 7 min | 3.5 min |
 | 4. Data Processing Pipeline | 2/2 | 7 min | 3.5 min |
 | 5. Auction Metadata Extraction | 2/2 | 6 min | 3.0 min |
+| 6. UI Integration | 1/2 | 4 min | 4.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (4 min), 04-01 (3 min), 04-02 (4 min), 05-01 (3 min), 05-02 (3 min)
+- Last 5 plans: 04-01 (3 min), 04-02 (4 min), 05-01 (3 min), 05-02 (3 min), 06-01 (4 min)
 - Trend: Consistent 3-4 minute execution times
 
 *Updated after each plan completion*
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [D05-02-01] Use ?? 0 for bidPrice/shippingFee in AuctionMetadata
 - [D05-02-02] Direct file URLs and local uploads use 0 for bid/shipping
 - [D05-02-03] Status shows "Extracting from [retailer]..." format
+- [D06-01-01] Default to Raw mode for backward compatibility
+- [D06-01-02] Unified mode throws on parse error (no fallback)
+- [D06-01-03] Both modes track totals for results display
 
 ### Pending Todos
 
@@ -92,7 +96,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 05-02-PLAN.md (Metadata Integration into CSV Output)
+Stopped at: Completed 06-01-PLAN.md (Format Toggle UI)
 Resume file: None
 
 ## Phase Completion Status
@@ -102,4 +106,4 @@ Resume file: None
 - [x] Phase 3: AMZD Special Handling (2/2 plans)
 - [x] Phase 4: Data Processing Pipeline (2/2 plans)
 - [x] Phase 5: Auction Metadata Extraction (2/2 plans)
-- [ ] Phase 6: Integration and Polish (0/2 plans)
+- [ ] Phase 6: UI Integration (1/2 plans)
