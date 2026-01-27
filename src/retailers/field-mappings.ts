@@ -81,6 +81,17 @@ const RETAILER_CONFIGS: Map<string, RetailerFieldConfig> = new Map([
     },
   ],
 
+  // AMZD (Amazon Direct): Uses ASIN, special price calculation handled in amzd-parser
+  [
+    'amzd',
+    {
+      itemNumber: ['ASIN'],
+      productName: ['Item Title', 'Model', 'Brand'],
+      qty: ['Qty'],
+      unitRetail: ['Lot item price'],
+    },
+  ],
+
   // ATT: Uses UPC (may contain "NOT AVAILABLE")
   [
     'att',
