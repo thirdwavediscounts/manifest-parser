@@ -15,6 +15,10 @@ export type {
   SubRetailerMap,
 } from './types'
 
+// Field mappings
+export { getRetailerFieldConfig, isNullValue, NULL_VALUES } from './field-mappings'
+export type { RetailerFieldConfig } from './field-mappings'
+
 // Registry
 export { retailerRegistry } from './registry'
 
