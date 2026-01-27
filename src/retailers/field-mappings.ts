@@ -39,7 +39,9 @@ export const NULL_VALUES: readonly string[] = [
  * @returns true if the value should be treated as null/empty
  */
 export function isNullValue(value: string): boolean {
-  return NULL_VALUES.includes(value.toLowerCase().trim())
+  // Normalize: lowercase, trim whitespace, and strip trailing commas (B-Stock exports include trailing commas)
+  const normalized = value.toLowerCase().trim().replace(/,+$/, '')
+  return NULL_VALUES.includes(normalized)
 }
 
 /**
