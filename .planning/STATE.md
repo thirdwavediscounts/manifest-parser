@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** Phase 3 - AMZD Special Handling COMPLETE
+**Current focus:** Phase 4 - Data Processing Pipeline
 
 ## Current Position
 
-Phase: 3 of 6 (AMZD Special Handling)
-Plan: 2 of 2 in phase - COMPLETE
-Status: Phase 3 complete
-Last activity: 2026-01-27 - Completed 03-02-PLAN.md (AMZD Parser Integration)
+Phase: 4 of 6 (Data Processing Pipeline)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-27 - Completed 04-01-PLAN.md (Data Cleaning and Deduplication)
 
-Progress: [######....] 55%
+Progress: [#######...] 70%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 4.0 minutes
-- Total execution time: 24 minutes
+- Total plans completed: 7
+- Average duration: 3.9 minutes
+- Total execution time: 27 minutes
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [######....] 55%
 | 1. Unified Format Foundation | 2/2 | 7 min | 3.5 min |
 | 2. Standard Retailer Mappings | 2/2 | 10 min | 5.0 min |
 | 3. AMZD Special Handling | 2/2 | 7 min | 3.5 min |
+| 4. Data Processing Pipeline | 1/2 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (4 min), 02-01 (3 min), 02-02 (7 min), 03-01 (3 min), 03-02 (4 min)
+- Last 5 plans: 02-01 (3 min), 02-02 (7 min), 03-01 (3 min), 03-02 (4 min), 04-01 (3 min)
 - Trend: TDD tasks execute efficiently
 
 *Updated after each plan completion*
@@ -64,6 +65,10 @@ Recent decisions affecting current work:
 - [D03-01-03] Banker's rounding (toFixed) for 2-decimal price precision
 - [D03-02-01] Route 'amzd' site to dedicated parser before standard logic
 - [D03-02-02] Use relaxed CSV parsing in tests for AMZD's malformed quotes
+- [D04-01-01] Non-printable chars include 0x00-0x1F, 0x7F, zero-width (U+200B-U+200F, U+FEFF)
+- [D04-01-02] item_number strips ALL whitespace, other fields only trim
+- [D04-01-03] normalizeItemNumber uses lowercase + leading zero strip for comparison only
+- [D04-01-04] Dedup preserves longest item_number format (leading zeros)
 
 ### Pending Todos
 
@@ -76,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed Phase 3 (AMZD Special Handling) - all plans complete
+Stopped at: Completed 04-01-PLAN.md (Data Cleaning and Deduplication)
 Resume file: None
