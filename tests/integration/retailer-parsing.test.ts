@@ -50,4 +50,41 @@ describe('Retailer Parsing Integration', () => {
     const items = parseManifestData(data, 'tgt', 'test.csv')
     expect(items[0].upc).toBe('840307041791')
   })
+
+  test('B-Stock manifest extracts Item #', () => {
+    const data = loadCsv('B_Apple-Watches-LN-1101.csv')
+    const items = parseManifestData(data, 'bstock', 'test.csv')
+    expect(items[0].upc).toBe('1778325')
+  })
+
+  test('QVC manifest extracts Item #', () => {
+    const data = loadCsv('QVC_Drinks-Tray-NC-1230.csv')
+    const items = parseManifestData(data, 'qvc', 'test.csv')
+    expect(items[0].upc).toBe('M81102')
+  })
+
+  test('RC manifest extracts Item #', () => {
+    const data = loadCsv("RC_Men's-2Pk-Knit-Cotton-Boxer-Briefs-NC-1100.csv")
+    const items = parseManifestData(data, 'rc', 'test.csv')
+    expect(items[0].upc).toBe('TFMW2BX')
+  })
+
+  test('JCP manifest extracts Brand', () => {
+    const data = loadCsv('JCP_Watches-UG-1205.csv')
+    const items = parseManifestData(data, 'jcp', 'test.csv')
+    // JCP has no UPC, uses Brand for identification
+    expect(items[0].upc).toBe('Invicta')
+  })
+
+  test('TL manifest uses Orig. Retail for unit_retail (XLSX format)', async () => {
+    // TL manifests are XLSX files, not CSV
+    const data = await loadXlsx('TL_Electric-Transportation-Accessories-UR-1139.xlsx')
+    const items = parseManifestData(data, 'tl', 'test.xlsx')
+    // Verify TL-specific field extraction:
+    // - Uses 'Orig. Retail' column for unit_retail (not 'Unit Retail')
+    // - Uses 'Product Name' for productName
+    expect(items.length).toBeGreaterThan(0)
+    expect(items[0].unitRetail).toBeGreaterThan(0)
+    expect(items[0].productName).toBeTruthy()
+  })
 })
