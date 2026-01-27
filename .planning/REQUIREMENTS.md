@@ -11,7 +11,7 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 - [x] **OUT-01**: Output manifests in unified CSV format with headers: item_number, product_name, qty, unit_retail, auction_url, bid_price, shipping_fee
 - [x] **OUT-02**: auction_url, bid_price, shipping_fee appear only on first row of each manifest
-- [ ] **OUT-03**: User can toggle between raw file download OR unified format in popup UI
+- [x] **OUT-03**: User can toggle between raw file download OR unified format in popup UI
 - [x] **OUT-04**: Each manifest stays as separate CSV file (not combined into one)
 
 ### Per-Retailer Field Mapping
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | OUT-01 | Phase 1 | Complete |
 | OUT-02 | Phase 1 | Complete |
-| OUT-03 | Phase 6 | Pending |
+| OUT-03 | Phase 6 | Complete |
 | OUT-04 | Phase 1 | Complete |
 | MAP-01 | Phase 2 | Complete |
 | MAP-02 | Phase 2 | Complete |

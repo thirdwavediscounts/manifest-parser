@@ -15,7 +15,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - [x] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
 - [x] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
 - [x] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
-- [ ] **Phase 6: UI Integration** - User toggle between raw and unified format
+- [x] **Phase 6: UI Integration** - User toggle between raw and unified format
 
 ## Phase Details
 
@@ -109,7 +109,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 06-01-PLAN.md — Add format toggle to popup UI and wire processing path
+- [x] 06-01-PLAN.md — Add format toggle to popup UI and wire processing path
 
 ## Progress
 
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. AMZD Special Handling | 2/2 | Complete | 2026-01-27 |
 | 4. Data Processing Pipeline | 2/2 | Complete | 2026-01-27 |
 | 5. Auction Metadata Extraction | 2/2 | Complete | 2026-01-27 |
-| 6. UI Integration | 0/1 | Not started | - |
+| 6. UI Integration | 1/1 | Complete | 2026-01-27 |
 
 ---
 *Roadmap created: 2026-01-27*
