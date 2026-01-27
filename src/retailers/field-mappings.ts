@@ -46,12 +46,13 @@ export function isNullValue(value: string): boolean {
 
 /**
  * Default field mapping for unknown retailers
+ * Includes comprehensive variations for common column names
  */
 const DEFAULT_CONFIG: RetailerFieldConfig = {
-  itemNumber: ['UPC', 'Item #', 'ASIN', 'SKU', 'Product ID'],
-  productName: ['Item Description', 'Product Name', 'Description', 'Title'],
-  qty: ['Qty', 'Quantity', 'Units'],
-  unitRetail: ['Unit Retail', 'Retail Price', 'MSRP', 'Price'],
+  itemNumber: ['UPC', 'Item #', 'ASIN', 'SKU', 'Product ID', 'Item Number', 'Barcode', 'EAN', 'Model'],
+  productName: ['Item Description', 'Product Name', 'Description', 'Title', 'Name', 'Product'],
+  qty: ['Qty', 'Quantity', 'Units', 'Count'],
+  unitRetail: ['Unit Retail', 'Retail Price', 'MSRP', 'Price', 'Retail', 'Unit Price'],
 }
 
 /**

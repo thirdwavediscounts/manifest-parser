@@ -6,9 +6,9 @@ import { parse } from 'csv-parse/sync'
 
 describe('Retailer Parsing Integration', () => {
   // Helper to load CSV files
-  const loadCsv = (filename: string) => {
+  const loadCsv = (filename: string): Record<string, unknown>[] => {
     const content = fs.readFileSync(path.join(__dirname, '../../csvs', filename), 'utf-8')
-    return parse(content, { columns: true, skip_empty_lines: true })
+    return parse(content, { columns: true, skip_empty_lines: true }) as Record<string, unknown>[]
   }
 
   // Helper to load XLSX files (for TL retailer)
