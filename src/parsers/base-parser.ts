@@ -4,6 +4,19 @@ import { getTechLiquidatorsFieldMapping } from './techliquidators-parser'
 import { getRetailerFieldConfig, isNullValue } from '../retailers'
 
 /**
+ * Get field mapping for AMZD (Amazon Direct)
+ * Returns standard field mapping for header detection
+ */
+function getAmzdFieldMapping(): FieldMapping {
+  return {
+    upc: ['asin'],
+    productName: ['item title', 'model', 'brand'],
+    unitRetail: ['lot item price'],
+    quantity: ['qty'],
+  }
+}
+
+/**
  * Get field mapping for a specific site
  * Uses retailer-specific configurations from field-mappings.ts
  */
@@ -14,6 +27,8 @@ function getFieldMapping(site: string): FieldMapping {
       return getBstockFieldMapping()
     case 'techliquidators':
       return getTechLiquidatorsFieldMapping()
+    case 'amzd':
+      return getAmzdFieldMapping()
   }
 
   // Use retailer field config for all other retailers
