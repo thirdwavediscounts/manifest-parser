@@ -11,6 +11,17 @@ describe('Retailer Parsing Integration', () => {
     return parse(content, { columns: true, skip_empty_lines: true }) as Record<string, unknown>[]
   }
 
+  // Helper to load CSV files with relaxed quote handling (for malformed CSVs like AMZD)
+  const loadCsvRelaxed = (filename: string): Record<string, unknown>[] => {
+    const content = fs.readFileSync(path.join(__dirname, '../../csvs', filename), 'utf-8')
+    return parse(content, {
+      columns: true,
+      skip_empty_lines: true,
+      relax_quotes: true,
+      relax_column_count: true,
+    }) as Record<string, unknown>[]
+  }
+
   // Helper to load XLSX files (for TL retailer)
   const loadXlsx = async (filename: string) => {
     const buffer = fs.readFileSync(path.join(__dirname, '../../csvs', filename))
@@ -86,5 +97,43 @@ describe('Retailer Parsing Integration', () => {
     expect(items.length).toBeGreaterThan(0)
     expect(items[0].unitRetail).toBeGreaterThan(0)
     expect(items[0].productName).toBeTruthy()
+  })
+
+  describe('AMZD (Amazon Direct)', () => {
+    // AMZD CSVs have malformed quotes - titles contain unquoted commas
+    // Use relaxed parsing to load the data
+    test('should parse AMZD manifest with correct field mappings', () => {
+      const data = loadCsvRelaxed('AMZD_161-Units-Pc-Electronics-Wireless-RD.csv')
+      const items = parseManifestData(data, 'amzd', 'amzd-test.csv')
+
+      // Should have items
+      expect(items.length).toBeGreaterThan(0)
+
+      // First item should have ASIN as item_number (upc field)
+      const firstItem = items[0]
+      expect(firstItem.upc).toBe('B083WFQC1C')
+
+      // Product name from Item Title
+      expect(firstItem.productName).toContain('GIGABYTE X870E AORUS')
+
+      // unit_retail should be Lot item price * 4.5
+      // First row: $188.00 * 4.5 = $846.00
+      expect(firstItem.unitRetail).toBe(846)
+
+      // Quantity
+      expect(firstItem.quantity).toBe(1)
+    })
+
+    test('should calculate unit_retail correctly with 4.5 multiplier', () => {
+      const data = loadCsvRelaxed('AMZD_161-Units-Pc-Electronics-Wireless-RD.csv')
+      const items = parseManifestData(data, 'amzd', 'amzd-test.csv')
+
+      // Find Apple Pencil row (6 qty at $17.75)
+      // $17.75 * 4.5 = $79.875 -> rounded to $79.88
+      const applePencil = items.find((i) => i.upc === 'B0CL7J12YK')
+      expect(applePencil).toBeDefined()
+      expect(applePencil!.unitRetail).toBeCloseTo(79.88, 2)
+      expect(applePencil!.quantity).toBe(6)
+    })
   })
 })
