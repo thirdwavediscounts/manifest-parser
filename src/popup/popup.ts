@@ -13,18 +13,18 @@ import {
   signOut,
 } from '../services/google-sheets'
 import {
-  createZipFromManifests,
-  createZipFromRawFiles,
+  createZipFromUnifiedManifests,
   downloadZip,
   generateZipFilename,
-  type RawZipEntry,
-  type ZipEntry,
+  type UnifiedZipEntry,
 } from '../utils/zip-export'
 import {
   getProxySettings,
   saveProxySettings,
   type ProxySettings,
 } from '../utils/proxy-config'
+import { transformToUnified, generateUnifiedCsv } from '../unified'
+import type { AuctionMetadata } from '../unified'
 
 interface UrlItem {
   url: string
@@ -508,7 +508,7 @@ function updateProcessButton(): void {
 
 /**
  * Handle process button click
- * Currently saves RAW manifest files without parsing to verify downloads work
+ * Downloads manifests, transforms to unified format, and creates ZIP
  */
 async function handleProcess(): Promise<void> {
   state.isProcessing = true
@@ -516,18 +516,19 @@ async function handleProcess(): Promise<void> {
   updateProcessButton()
   showProgress()
 
-  // Raw entries for tab-processed URLs (no parsing)
-  const rawEntries: RawZipEntry[] = []
-  // Parsed entries for local files (still need parsing)
-  const parsedEntries: ZipEntry[] = []
+  // Unified entries for processed manifests (transformed to unified CSV format)
+  const unifiedEntries: UnifiedZipEntry[] = []
+  // Track totals for display
+  let totalItems = 0
+  let totalRetailValue = 0
 
   const selectedUrls = state.urls.filter((u) => u.selected)
-  const totalItems = selectedUrls.length + state.uploadedFiles.length
+  const totalToProcess = selectedUrls.length + state.uploadedFiles.length
 
   let processed = 0
 
   try {
-    // Process URLs from sheet - save raw data without parsing
+    // Process URLs from sheet - download, parse, and transform to unified format
     for (const urlItem of selectedUrls) {
       // Check for cancellation
       if (state.isCancelled) {
@@ -537,13 +538,13 @@ async function handleProcess(): Promise<void> {
       // Save progress state for persistence
       state.processingProgress = {
         current: processed,
-        total: totalItems,
+        total: totalToProcess,
         currentUrl: getDisplayUrl(urlItem.url),
       }
       await saveState()
 
       updateProgress(
-        (processed / totalItems) * 100,
+        (processed / totalToProcess) * 100,
         `Processing ${getDisplayUrl(urlItem.url)}...`
       )
 
@@ -562,32 +563,81 @@ async function handleProcess(): Promise<void> {
           )
           updateUrlListUI()
 
-          // Save raw manifest data without parsing
+          // Transform to unified format
           if (result.manifestData && result.manifestType) {
-            rawEntries.push({
-              filename,
-              data: result.manifestData,
-              retailer,
-              sourceUrl: urlItem.url,
-              fileType: result.manifestType,
-            })
-            console.log(`[ManifestParser] Added raw entry: ${filename}, ${result.manifestData.length} chars`)
+            try {
+              // Parse raw base64 data via background worker to get ManifestItem[]
+              const items = await parseManifestFromBase64(
+                result.manifestData,
+                filename,
+                result.manifestType
+              )
+
+              if (items.length > 0) {
+                // Create auction metadata (bid_price and shipping_fee populated in Phase 5)
+                const metadata: AuctionMetadata = {
+                  auctionUrl: urlItem.url,
+                  bidPrice: null,
+                  shippingFee: null,
+                }
+
+                // Transform to unified format and generate CSV
+                const unifiedRows = transformToUnified(items, metadata)
+                const csvContent = generateUnifiedCsv(unifiedRows, metadata)
+
+                unifiedEntries.push({
+                  filename: filename.replace(/\.(xlsx|xls)$/, '.csv'),
+                  csvContent,
+                  retailer,
+                  sourceUrl: urlItem.url,
+                })
+
+                // Track totals
+                totalItems += items.length
+                totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+
+                console.log(`[ManifestParser] Added unified entry: ${filename}, ${items.length} items`)
+              } else {
+                console.log(`[ManifestParser] No items parsed from ${urlItem.url}`)
+              }
+            } catch (parseError) {
+              console.error(`[ManifestParser] Failed to parse manifest from ${urlItem.url}:`, parseError)
+            }
           } else {
             console.log(`[ManifestParser] No manifest data for ${urlItem.url}`)
           }
         } else {
-          // Direct file URL - download as raw
+          // Direct file URL - download and transform
           console.log(`[ManifestParser] Direct download: ${urlItem.url}`)
           const rawData = await downloadRawFile(urlItem.url)
           if (rawData.data) {
-            const filename = generateFilename(urlItem.url, retailer)
-            rawEntries.push({
-              filename,
-              data: rawData.data,
-              retailer,
-              sourceUrl: urlItem.url,
-              fileType: rawData.type,
-            })
+            try {
+              const filename = generateFilename(urlItem.url, retailer)
+              const items = await parseManifestFromBase64(rawData.data, filename, rawData.type)
+
+              if (items.length > 0) {
+                const metadata: AuctionMetadata = {
+                  auctionUrl: urlItem.url,
+                  bidPrice: null,
+                  shippingFee: null,
+                }
+
+                const unifiedRows = transformToUnified(items, metadata)
+                const csvContent = generateUnifiedCsv(unifiedRows, metadata)
+
+                unifiedEntries.push({
+                  filename: filename.replace(/\.(xlsx|xls)$/, '.csv'),
+                  csvContent,
+                  retailer,
+                  sourceUrl: urlItem.url,
+                })
+
+                totalItems += items.length
+                totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+              }
+            } catch (parseError) {
+              console.error(`[ManifestParser] Failed to parse ${urlItem.url}:`, parseError)
+            }
           }
         }
       } catch (error) {
@@ -597,7 +647,7 @@ async function handleProcess(): Promise<void> {
       processed++
     }
 
-    // Process uploaded files - these still need parsing for stats
+    // Process uploaded files - parse and transform to unified format
     for (const file of state.uploadedFiles) {
       // Check for cancellation
       if (state.isCancelled) {
@@ -605,17 +655,30 @@ async function handleProcess(): Promise<void> {
         break
       }
 
-      updateProgress((processed / totalItems) * 100, `Parsing ${file.name}...`)
+      updateProgress((processed / totalToProcess) * 100, `Parsing ${file.name}...`)
 
       try {
         const items = await parseLocalFile(file)
         if (items.length > 0) {
-          parsedEntries.push({
-            filename: file.name,
-            items,
+          // Create metadata for local upload (no auction URL for local files)
+          const metadata: AuctionMetadata = {
+            auctionUrl: 'local-upload',
+            bidPrice: null,
+            shippingFee: null,
+          }
+
+          const unifiedRows = transformToUnified(items, metadata)
+          const csvContent = generateUnifiedCsv(unifiedRows, metadata)
+
+          unifiedEntries.push({
+            filename: file.name.replace(/\.(xlsx|xls)$/, '.csv'),
+            csvContent,
             retailer: 'manual',
             sourceUrl: 'local-upload',
           })
+
+          totalItems += items.length
+          totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
         }
       } catch (error) {
         console.error(`Failed to parse ${file.name}:`, error)
@@ -633,42 +696,26 @@ async function handleProcess(): Promise<void> {
 
     updateProgress(95, 'Creating ZIP file...')
 
-    const totalEntries = rawEntries.length + parsedEntries.length
-    if (totalEntries === 0) {
+    if (unifiedEntries.length === 0) {
       alert('No valid manifest data found')
       hideProgress()
       return
     }
 
-    // Create ZIP - combine raw and parsed entries
-    let zipBlob: Blob
-
-    if (rawEntries.length > 0 && parsedEntries.length === 0) {
-      // Only raw entries - use raw file ZIP
-      zipBlob = await createZipFromRawFiles(rawEntries)
-    } else if (rawEntries.length === 0 && parsedEntries.length > 0) {
-      // Only parsed entries - use manifest ZIP
-      zipBlob = await createZipFromManifests(parsedEntries)
-    } else {
-      // Mixed - prioritize raw entries for now (skip parsed)
-      // TODO: Combine both in single ZIP when implementing full parsing
-      zipBlob = await createZipFromRawFiles(rawEntries)
-    }
+    // Create ZIP from unified entries
+    const zipBlob = await createZipFromUnifiedManifests(unifiedEntries)
 
     state.lastZipBlob = zipBlob
 
-    // Calculate totals (only from parsed entries for now)
-    state.results.files = totalEntries
-    state.results.items = parsedEntries.reduce((sum, e) => sum + e.items.length, 0)
-    state.results.retailValue = parsedEntries.reduce(
-      (sum, e) => sum + e.items.reduce((s, i) => s + i.unitRetail * i.quantity, 0),
-      0
-    )
+    // Store totals for results display
+    state.results.files = unifiedEntries.length
+    state.results.items = totalItems
+    state.results.retailValue = totalRetailValue
 
     updateProgress(100, 'Complete!')
 
     // Download ZIP
-    downloadZip(zipBlob, generateZipFilename(totalEntries))
+    downloadZip(zipBlob, generateZipFilename(unifiedEntries.length))
 
     // Clear processing state and save results
     state.processingProgress = null
@@ -776,6 +823,25 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
+}
+
+/**
+ * Parse raw base64 manifest data via background worker
+ * Sends PARSE_FILE message and receives ManifestItem[]
+ */
+async function parseManifestFromBase64(
+  data: string,
+  filename: string,
+  fileType: 'csv' | 'xlsx' | 'xls'
+): Promise<ManifestItem[]> {
+  const response = await chrome.runtime.sendMessage<ExtensionMessage, ExtensionMessage<ManifestItem[]>>({
+    type: 'PARSE_FILE',
+    payload: { data, filename, type: fileType },
+  })
+  if (response?.error) {
+    throw new Error(response.error)
+  }
+  return response?.payload || []
 }
 
 /**
@@ -1068,45 +1134,70 @@ async function processUrlInTab(url: string): Promise<TabProcessResult> {
 // interceptAndDownload is now in retailer modules (src/retailers/sites/*.ts)
 
 /**
- * Generate filename in format: RETAILER_ListingName_AuctionEndTime.csv
- * Exception: AMZD (Amazon Direct) doesn't include date
+ * Generate filename in format: RETAILER_ListingName.csv
+ * No date suffix - PST military time is included in listingName when available
  */
 function generateListingFilename(
   retailer: string,
   listingName: string,
-  auctionEndTime: string | null
+  _auctionEndTime: string | null
 ): string {
-  // Sanitize retailer and listing name for use in filename
+  const MAX_FILENAME_LENGTH = 50
+
+  // Sanitize for filename (remove invalid chars, replace spaces)
   const sanitize = (str: string): string =>
     str
       .replace(/[<>:"/\\|?*]/g, '') // Remove invalid filename chars
       .replace(/\s+/g, '-') // Replace spaces with dashes
-      .substring(0, 50) // Limit length
 
   const sanitizedRetailer = sanitize(retailer)
-  const sanitizedListing = sanitize(listingName)
+  let sanitizedListing = sanitize(listingName)
 
-  // AMZD (Amazon Direct) doesn't include date in filename
-  if (retailer.toUpperCase() === 'AMZD') {
-    return `${sanitizedRetailer}_${sanitizedListing}.csv`
-  }
+  // Max listing length: 50 - retailer_ - .csv (min 10 chars for listing)
+  const maxListingLen = Math.max(10, MAX_FILENAME_LENGTH - sanitizedRetailer.length - 1 - 4)
 
-  // Format auction end time
-  let timeStr = ''
-  if (auctionEndTime) {
-    try {
-      const date = new Date(auctionEndTime)
-      // Format as YYYY-MM-DD
-      timeStr = date.toISOString().split('T')[0]
-    } catch {
-      // Use current date as fallback
-      timeStr = new Date().toISOString().split('T')[0]
+  // Preserve condition and time at the end (last 2 dash-separated parts if they look like condition/time)
+  // Format: "ProductName-COND-HHMM" where COND is 1-3 chars, HHMM is 4 digits
+  const parts = sanitizedListing.split('-')
+  let suffix = ''
+
+  if (parts.length >= 2) {
+    const lastPart = parts[parts.length - 1]
+    const secondLast = parts[parts.length - 2]
+
+    // Check if last part is time (4 digits)
+    const isTime = /^\d{4}$/.test(lastPart)
+    // Check if second-to-last is condition (1-3 uppercase letters)
+    const isCondition = /^[A-Z]{1,3}$/.test(secondLast)
+
+    if (isTime && isCondition) {
+      // Both condition and time present
+      suffix = `-${secondLast}-${lastPart}`
+      parts.pop()
+      parts.pop()
+    } else if (isTime) {
+      // Only time present
+      suffix = `-${lastPart}`
+      parts.pop()
+    } else if (/^[A-Z]{1,3}$/.test(lastPart)) {
+      // Only condition present (no time)
+      suffix = `-${lastPart}`
+      parts.pop()
     }
-  } else {
-    timeStr = new Date().toISOString().split('T')[0]
   }
 
-  return `${sanitizedRetailer}_${sanitizedListing}_${timeStr}.csv`
+  // Truncate the product name part, preserving the suffix
+  const maxProductLen = maxListingLen - suffix.length
+  let productPart = parts.join('-')
+  if (productPart.length > maxProductLen) {
+    productPart = productPart.substring(0, maxProductLen)
+    // Clean up trailing dash if truncation left one
+    productPart = productPart.replace(/-$/, '')
+  }
+
+  sanitizedListing = productPart + suffix
+
+  return `${sanitizedRetailer}_${sanitizedListing}.csv`
 }
 
 // needsTabProcessing is now imported from '../retailers'
