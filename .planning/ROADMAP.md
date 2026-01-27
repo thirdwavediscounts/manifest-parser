@@ -12,7 +12,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 
 - [x] **Phase 1: Unified Format Foundation** - Establish unified CSV structure and transformation pipeline
 - [x] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
-- [ ] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
+- [x] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
 - [ ] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
 - [ ] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
 - [ ] **Phase 6: UI Integration** - User toggle between raw and unified format
@@ -76,11 +76,11 @@ Plans:
   3. Rows with identical identifiers combined (quantities summed)
   4. When deduplicating, product_name and unit_retail come from row with highest quantity
   5. Output sorted by unit_retail descending, then product_name alphabetically
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Implement data cleaning functions
-- [ ] 04-02: Implement deduplication and sorting logic
+- [ ] 04-01-PLAN.md — TDD: Data cleaning and deduplication functions
+- [ ] 04-02-PLAN.md — TDD: Sorting and pipeline integration
 
 ### Phase 5: Auction Metadata Extraction
 **Goal**: Extract bid price and shipping fee from auction listing pages
