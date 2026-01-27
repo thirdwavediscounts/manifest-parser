@@ -14,7 +14,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - [x] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
 - [x] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
 - [x] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
-- [ ] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
+- [x] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
 - [ ] **Phase 6: UI Integration** - User toggle between raw and unified format
 
 ## Phase Details
@@ -94,8 +94,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Extend MetadataResult and implement extraction in retailer modules
-- [ ] 05-02-PLAN.md — Integrate extracted metadata into popup and CSV output
+- [x] 05-01-PLAN.md — Extend MetadataResult and implement extraction in retailer modules
+- [x] 05-02-PLAN.md — Integrate extracted metadata into popup and CSV output
 
 ### Phase 6: UI Integration
 **Goal**: User can choose between raw files and unified format at download time
@@ -122,7 +122,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Standard Retailer Mappings | 2/2 | Complete | 2026-01-27 |
 | 3. AMZD Special Handling | 2/2 | Complete | 2026-01-27 |
 | 4. Data Processing Pipeline | 2/2 | Complete | 2026-01-27 |
-| 5. Auction Metadata Extraction | 0/2 | Not started | - |
+| 5. Auction Metadata Extraction | 2/2 | Complete | 2026-01-27 |
 | 6. UI Integration | 0/1 | Not started | - |
 
 ---

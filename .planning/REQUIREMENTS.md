@@ -30,9 +30,9 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 ### Auction Metadata Extraction
 
-- [ ] **META-01**: Extract bid_price from auction listing page during tab processing
-- [ ] **META-02**: Extract shipping_fee from auction listing page during tab processing
-- [ ] **META-03**: Capture auction_url (the URL being processed) for each manifest
+- [x] **META-01**: Extract bid_price from auction listing page during tab processing
+- [x] **META-02**: Extract shipping_fee from auction listing page during tab processing
+- [x] **META-03**: Capture auction_url (the URL being processed) for each manifest
 
 ### Data Processing
 
@@ -96,9 +96,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MAP-09 | Phase 2 | Complete |
 | MAP-10 | Phase 2 | Complete |
 | MAP-11 | Phase 2 | Complete |
-| META-01 | Phase 5 | Pending |
-| META-02 | Phase 5 | Pending |
-| META-03 | Phase 5 | Pending |
+| META-01 | Phase 5 | Complete |
+| META-02 | Phase 5 | Complete |
+| META-03 | Phase 5 | Complete |
 | PROC-01 | Phase 4 | Pending |
 | PROC-02 | Phase 4 | Pending |
 | PROC-03 | Phase 4 | Pending |
