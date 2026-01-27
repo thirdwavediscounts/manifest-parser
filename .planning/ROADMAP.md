@@ -60,11 +60,11 @@ Plans:
   3. ASIN found by B0XXXXXXXXX pattern scan regardless of column position
   4. Split Item Title columns merged back into single product_name
   5. unit_retail calculated as Lot item price * 4.5
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Implement right-anchor column extraction for AMZD
-- [ ] 03-02: Implement ASIN pattern matching and title merging
+- [ ] 03-01-PLAN.md — TDD: AMZD parser core functions (ASIN detection, right-anchor extraction, price calculation)
+- [ ] 03-02-PLAN.md — Integrate AMZD parser into pipeline with integration tests
 
 ### Phase 4: Data Processing Pipeline
 **Goal**: Clean, deduplicate, and sort manifest data for consistent output
