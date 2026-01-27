@@ -53,18 +53,18 @@ Plans:
 ### Phase 3: AMZD Special Handling
 **Goal**: Parse Amazon Direct manifests with misaligned columns correctly
 **Depends on**: Phase 1
-**Requirements**: MAP-03, AMZD-01, AMZD-02, AMZD-03, AMZD-04, AMZD-05, AMZD-06
+**Requirements**: MAP-03, AMZD-01, AMZD-02, AMZD-03, AMZD-05, AMZD-06
 **Success Criteria** (what must be TRUE):
   1. AMZD manifest prices extracted correctly from -2 column position (right-anchored)
   2. AMZD manifest quantities extracted correctly from -3 column position
   3. ASIN found by B0XXXXXXXXX pattern scan regardless of column position
-  4. Split Item Title columns merged back into single product_name
+  4. Item Title used directly for product_name (fallback: Model → Brand)
   5. unit_retail calculated as Lot item price * 4.5
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — TDD: AMZD parser core functions (ASIN detection, right-anchor extraction, price calculation)
-- [ ] 03-02-PLAN.md — Integrate AMZD parser into pipeline with integration tests
+- [x] 03-01-PLAN.md — TDD: AMZD parser core functions (ASIN detection, right-anchor extraction, price calculation)
+- [x] 03-02-PLAN.md — Integrate AMZD parser into pipeline with integration tests
 
 ### Phase 4: Data Processing Pipeline
 **Goal**: Clean, deduplicate, and sort manifest data for consistent output
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Unified Format Foundation | 2/2 | Complete | 2026-01-27 |
 | 2. Standard Retailer Mappings | 2/2 | Complete | 2026-01-27 |
-| 3. AMZD Special Handling | 0/2 | Not started | - |
+| 3. AMZD Special Handling | 2/2 | Complete | 2026-01-27 |
 | 4. Data Processing Pipeline | 0/2 | Not started | - |
 | 5. Auction Metadata Extraction | 0/2 | Not started | - |
 | 6. UI Integration | 0/1 | Not started | - |
