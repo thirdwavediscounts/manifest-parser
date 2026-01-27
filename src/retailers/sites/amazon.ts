@@ -48,6 +48,78 @@ export const amazonRetailer: RetailerModule = {
     let listingName = 'Amazon Listing'
     let retailer = 'Amazon'
 
+    /**
+     * Parse price string to number
+     * Handles currency symbols, commas, and non-numeric values like "TBD"
+     */
+    function parsePrice(text: string | null): number | null {
+      if (!text) return null
+      // Remove currency symbols, commas, whitespace
+      const cleaned = text.replace(/[$,\s]/g, '').trim()
+      // Handle "TBD", "N/A", "Calculated", "Free" etc
+      if (!/^\d/.test(cleaned)) return null
+      const value = parseFloat(cleaned)
+      return isNaN(value) ? null : value
+    }
+
+    /**
+     * Extract shipping fee from DOM
+     * Look in delivery/shipping section for shipping cost
+     * Amazon Direct is fixed-price, so bidPrice will always be null
+     */
+    function extractShippingFee(): number | null {
+      // Try common Amazon shipping selectors
+      const shippingSelectors = [
+        '#delivery-message',
+        '[data-csa-c-content-id*="shipping"]',
+        '#deliveryBlockMessage',
+        '#mir-layout-DELIVERY_BLOCK',
+        '[class*="delivery"]',
+        '[class*="shipping"]',
+      ]
+
+      for (const selector of shippingSelectors) {
+        const el = document.querySelector(selector)
+        if (el?.textContent) {
+          const text = el.textContent.toLowerCase()
+          // Check for FREE Shipping
+          if (text.includes('free shipping') || text.includes('free delivery')) {
+            return 0
+          }
+          // Try to extract shipping price
+          const priceMatch = el.textContent.match(/\$?([\d,]+(?:\.\d{2})?)\s*(?:shipping|delivery)/i)
+          if (priceMatch) {
+            const parsed = parsePrice(priceMatch[1])
+            if (parsed !== null) return parsed
+          }
+        }
+      }
+
+      // Search body text for shipping patterns
+      const bodyText = document.body.innerText || ''
+
+      // Check for free shipping first
+      if (/free\s*(?:shipping|delivery)/i.test(bodyText)) {
+        return 0
+      }
+
+      // Look for "Shipping: $XXX" patterns
+      const shippingPatterns = [
+        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+      ]
+
+      for (const pattern of shippingPatterns) {
+        const match = bodyText.match(pattern)
+        if (match) {
+          const parsed = parsePrice(match[1])
+          if (parsed !== null) return parsed
+        }
+      }
+
+      return null
+    }
+
     // Method 1: Try #productTitle (standard Amazon product pages)
     const productTitle = document.getElementById('productTitle')
     let rawTitle = ''
@@ -83,10 +155,15 @@ export const amazonRetailer: RetailerModule = {
       listingName = rawTitle.substring(0, 100) || 'Amazon Listing'
     }
 
+    // Extract shipping fee (AMZD is fixed-price, not auction, so bidPrice is always null)
+    const shippingFee = extractShippingFee()
+
     return {
       retailer,
       listingName,
       auctionEndTime: null, // Amazon doesn't have auction end times
+      bidPrice: null, // Amazon Direct is fixed-price, not auction
+      shippingFee,
     }
 
     /**
@@ -134,14 +211,21 @@ export const amazonRetailer: RetailerModule = {
 
     /**
      * Extract condition abbreviation from title
+     * Uses general condition mapping:
+     * RD=Returned Damaged, R=Returns, D=Damaged, S=Salvage,
+     * NC=New, UW=Used Working, LN=Like New, UG=Used Good, etc.
      */
     function extractConditionAbbrev(title: string): string {
       const lowerTitle = title.toLowerCase()
 
+      // Check more specific conditions first
       if (lowerTitle.includes('returned') && lowerTitle.includes('damaged')) {
         return 'RD'
       }
-      if (lowerTitle.includes('returned')) {
+      if (lowerTitle.includes('uninspected') && lowerTitle.includes('return')) {
+        return 'UR'
+      }
+      if (lowerTitle.includes('returned') || lowerTitle.includes('return')) {
         return 'R'
       }
       if (lowerTitle.includes('damaged')) {
@@ -150,11 +234,29 @@ export const amazonRetailer: RetailerModule = {
       if (lowerTitle.includes('salvage')) {
         return 'S'
       }
+      if (lowerTitle.includes('like new')) {
+        return 'LN'
+      }
+      if (lowerTitle.includes('brand new') || lowerTitle.includes('new condition')) {
+        return 'NC'
+      }
       if (lowerTitle.includes('new')) {
-        return 'N'
+        return 'NC'
+      }
+      if (lowerTitle.includes('used good')) {
+        return 'UG'
+      }
+      if (lowerTitle.includes('used fair')) {
+        return 'UF'
       }
       if (lowerTitle.includes('used')) {
-        return 'U'
+        return 'UW'
+      }
+      if (lowerTitle.includes('overstock')) {
+        return 'OS'
+      }
+      if (lowerTitle.includes('mixed')) {
+        return 'MC'
       }
 
       return ''

@@ -14,21 +14,12 @@
 
 import type { RetailerModule, SubRetailerMap } from '../types'
 
-/** Sub-retailers with auction pages on B-Stock */
+/** Sub-retailers with auction pages on B-Stock - mapped to short retailer codes */
 const SUB_RETAILERS: SubRetailerMap = {
   qvc: 'QVC',
-  bayer: 'Bayer',
-  acehardware: 'Ace Hardware',
-  jcpenney: 'JCPenney',
-  target: 'Target',
-  costco: 'Costco',
-  walmart: 'Walmart',
-  homedepot: 'Home Depot',
-  lowes: 'Lowes',
-  bestbuy: 'Best Buy',
-  macys: 'Macys',
-  nordstrom: 'Nordstrom',
-  kohls: 'Kohls',
+  bayer: 'BY',
+  acehardware: 'ACE',
+  jcpenney: 'JCP',
 }
 
 export const bstockAuctionRetailer: RetailerModule = {
@@ -62,75 +53,247 @@ export const bstockAuctionRetailer: RetailerModule = {
 
   /**
    * Extract metadata from B-Stock retailer auction page
+   * Extracts retailer CODE, product name (cleaned), condition abbreviation, and PST time
    * Runs in ISOLATED world
    */
   extractMetadata: function () {
     const url = window.location.href.toLowerCase()
+    const pageTitle = document.title
 
-    // Extract retailer from URL path: /jcpenney/auction/ -> JCPenney
-    const retailer = extractRetailerFromUrl() || extractRetailerFromTitle()
-    const listingName = extractListingFromTitle()
-
-    return {
-      retailer,
-      listingName,
-      auctionEndTime: null,
+    /**
+     * Parse price string to number
+     * Handles currency symbols, commas, and non-numeric values like "TBD"
+     */
+    function parsePrice(text: string | null): number | null {
+      if (!text) return null
+      // Remove currency symbols, commas, whitespace
+      const cleaned = text.replace(/[$,\s]/g, '').trim()
+      // Handle "TBD", "N/A", "Calculated", "Free" etc
+      if (!/^\d/.test(cleaned)) return null
+      const value = parseFloat(cleaned)
+      return isNaN(value) ? null : value
     }
 
-    function extractRetailerFromUrl(): string | null {
+    /**
+     * Extract bid price from DOM
+     * Look for labels like "Current Bid:", "High Bid:", "Winning Bid:"
+     */
+    function extractBidPrice(): number | null {
+      // Try common selectors first
+      const bidSelectors = [
+        '[class*="bid-amount"]',
+        '[class*="current-bid"]',
+        '[class*="winning-bid"]',
+        '[class*="high-bid"]',
+        '[id*="currentBid"]',
+        '[id*="winningBid"]',
+      ]
+
+      for (const selector of bidSelectors) {
+        const el = document.querySelector(selector)
+        if (el?.textContent) {
+          const parsed = parsePrice(el.textContent)
+          if (parsed !== null) return parsed
+        }
+      }
+
+      // Search for label-based patterns in page text
+      const bodyText = document.body.innerText
+      // Look for "Current Bid: $X,XXX" or "High Bid: $X,XXX" patterns
+      const bidPatterns = [
+        /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Bid\s*Amount[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+      ]
+
+      for (const pattern of bidPatterns) {
+        const match = bodyText.match(pattern)
+        if (match) {
+          const parsed = parsePrice(match[1])
+          if (parsed !== null) return parsed
+        }
+      }
+
+      return null
+    }
+
+    /**
+     * Extract shipping fee from DOM
+     * Look for "Shipping:", "Freight:", "Estimated Shipping:" labels
+     */
+    function extractShippingFee(): number | null {
+      // Try common selectors first
+      const shippingSelectors = [
+        '[class*="shipping"]',
+        '[class*="freight"]',
+        '[id*="shipping"]',
+        '[id*="freight"]',
+      ]
+
+      for (const selector of shippingSelectors) {
+        const el = document.querySelector(selector)
+        if (el?.textContent) {
+          const text = el.textContent.toLowerCase()
+          // Check for free shipping
+          if (text.includes('free')) return 0
+          const parsed = parsePrice(el.textContent)
+          if (parsed !== null) return parsed
+        }
+      }
+
+      // Search for label-based patterns in page text
+      const bodyText = document.body.innerText
+      // Check for free shipping first
+      if (/shipping[:\s]*free/i.test(bodyText) || /free\s*shipping/i.test(bodyText)) {
+        return 0
+      }
+
+      // Look for "Shipping: $XXX" or "Freight: $XXX" patterns
+      const shippingPatterns = [
+        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+      ]
+
+      for (const pattern of shippingPatterns) {
+        const match = bodyText.match(pattern)
+        if (match) {
+          const parsed = parsePrice(match[1])
+          if (parsed !== null) return parsed
+        }
+      }
+
+      return null
+    }
+
+    // Extract retailer CODE from URL
+    const retailer = extractRetailerCode()
+
+    // Parse title: "ProductInfo, Condition | Closes: Date Time PST | Retailer..."
+    const parts = pageTitle.split('|').map((p) => p.trim())
+    const productPart = parts[0] || ''
+    const closesPart = parts[1] || ''
+
+    // Clean product name
+    let productName = productPart
+      // Remove "X Pallets of" or "X Boxes of" prefix
+      .replace(/^\d+\s+(?:pallet|box)(?:es|s)?\s+of\s+/i, '')
+      // Remove "& More" suffix
+      .replace(/\s*&\s*More\s*/gi, ' ')
+      .trim()
+
+    // Remove "by [Brand]..." suffix
+    const byIndex = productName.toLowerCase().indexOf(' by ')
+    if (byIndex > 0) {
+      productName = productName.substring(0, byIndex).trim()
+    }
+
+    // Take first comma-separated part as main product (before condition info)
+    productName = productName.split(',')[0].trim()
+
+    // Extract condition abbreviation from the full product part
+    const condition = conditionToAbbrev(productPart)
+
+    // Extract close time - try multiple formats
+    let pstTime = ''
+
+    // Format 1: "HH:MM:SS AM/PM PST" or "HH:MM AM/PM PT"
+    let timeMatch = closesPart.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)\s*(?:PST|PT)/i)
+
+    // Format 2: "HH:MM:SS AM/PM" without timezone (some pages don't include it)
+    if (!timeMatch) {
+      timeMatch = closesPart.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i)
+    }
+
+    // Format 3: Check productPart for time (some pages put it there)
+    if (!timeMatch) {
+      timeMatch = productPart.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)\s*(?:PST|PT)?/i)
+    }
+
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10)
+      const minutes = timeMatch[2]
+      const ampm = timeMatch[3].toUpperCase()
+      if (ampm === 'PM' && hours !== 12) hours += 12
+      if (ampm === 'AM' && hours === 12) hours = 0
+      pstTime = `${hours.toString().padStart(2, '0')}${minutes}`
+    }
+
+    // Build listing name: "ProductName Condition Time"
+    const nameParts = [productName, condition, pstTime].filter((p) => p.length > 0)
+    const listingName = nameParts.join(' ')
+
+    // Extract bid price and shipping fee from DOM
+    const bidPrice = extractBidPrice()
+    const shippingFee = extractShippingFee()
+
+    return { retailer, listingName, auctionEndTime: null, bidPrice, shippingFee }
+
+    /**
+     * Extract retailer code from URL path
+     * Maps URL slugs to short retailer codes
+     */
+    function extractRetailerCode(): string {
       const auctionMatch = url.match(/bstock\.com\/([a-z0-9-]+)\/auction\//)
       if (auctionMatch) {
         const retailerKey = auctionMatch[1]
         // Skip generic paths
         if (['buy', 'sell', 'about', 'help', 'login'].includes(retailerKey)) {
-          return null
+          return 'BSTOCK'
         }
-        const subRetailers: SubRetailerMap = {
+        const retailerCodes: Record<string, string> = {
           qvc: 'QVC',
-          bayer: 'Bayer',
-          acehardware: 'Ace Hardware',
-          jcpenney: 'JCPenney',
-          target: 'Target',
-          costco: 'Costco',
-          walmart: 'Walmart',
-          homedepot: 'Home Depot',
-          lowes: 'Lowes',
-          bestbuy: 'Best Buy',
-          macys: 'Macys',
-          nordstrom: 'Nordstrom',
-          kohls: 'Kohls',
+          bayer: 'BY',
+          acehardware: 'ACE',
+          jcpenney: 'JCP',
         }
-        return subRetailers[retailerKey] || retailerKey.charAt(0).toUpperCase() + retailerKey.slice(1)
+        return retailerCodes[retailerKey] || retailerKey.toUpperCase()
       }
-      return null
+      return 'BSTOCK'
     }
 
-    function extractRetailerFromTitle(): string {
-      // Title format: "Listing Name | ... | JCPenney Liquidation Auctions 2026-01-21"
-      const parts = document.title.split('|')
-      if (parts.length >= 2) {
-        const retailerPart = parts[parts.length - 1]
-          .trim()
-          .replace(/\s*Liquidation\s*$/i, '')
-          .replace(/\s*Auctions?\s*$/i, '')
-          .replace(/\s*\d{4}-\d{2}-\d{2}\s*$/i, '')
-          .trim()
-        if (retailerPart.length > 0 && retailerPart.length < 50) {
-          return retailerPart
-        }
-      }
-      return 'B-Stock'
-    }
+    /**
+     * Convert condition string to abbreviation
+     * Mappings: NEW/NC, LN, UG, UF, UR, RD, S, UW, DC, MC, OS, D, R, GA/GB/GC
+     */
+    function conditionToAbbrev(text: string): string {
+      if (!text) return ''
 
-    function extractListingFromTitle(): string {
-      const parts = document.title.split('|')
-      if (parts.length >= 1) {
-        const listingPart = parts[0].trim()
-        if (listingPart.length > 0 && listingPart.length < 200) {
-          return listingPart
-        }
-      }
-      return 'Listing'
+      // Normalize: lowercase, replace underscores/hyphens with spaces
+      const condLower = text.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
+      if (!condLower) return ''
+
+      // Grade conditions
+      if (condLower.includes('grade a')) return 'GA'
+      if (condLower.includes('grade b')) return 'GB'
+      if (condLower.includes('grade c')) return 'GC'
+
+      // Used conditions (specific before generic)
+      if (condLower.includes('used good')) return 'UG'
+      if (condLower.includes('used fair') || condLower.includes('used acceptable')) return 'UF'
+      if (condLower.includes('used working')) return 'UW'
+
+      // Return/damage conditions
+      if (condLower.includes('returned damaged') || condLower.includes('return damaged')) return 'RD'
+      if (condLower.includes('uninspected return') || condLower.includes('uninspected')) return 'UR'
+      if (condLower.includes('return')) return 'R'
+      if (condLower.includes('damaged')) return 'D'
+
+      // New conditions
+      if (condLower.includes('like new')) return 'LN'
+      if (condLower.includes('brand new') || condLower.includes('new condition')) return 'NC'
+      // Check for standalone "new" or ", new" or "new," patterns
+      if (condLower === 'new' || /[,\s]new[,\s]/.test(condLower) || condLower.endsWith(' new') || condLower.startsWith('new ')) return 'NEW'
+
+      // Other
+      if (condLower.includes('salvage')) return 'S'
+      if (condLower.includes('overstock')) return 'OS'
+      if (condLower.includes('mixed')) return 'MC'
+      if (condLower.includes('used')) return 'UW'
+
+      return ''
     }
   },
 

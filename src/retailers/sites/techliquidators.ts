@@ -44,32 +44,222 @@ export const techLiquidatorsRetailer: RetailerModule = {
   /**
    * Extract metadata from TechLiquidators page
    * Runs in ISOLATED world
+   *
+   * Naming convention: "[Title] [Condition] [MilitaryTime]"
+   * Example: "Electric Transportation & Accessories UR 1139"
+   *
+   * Condition abbreviations:
+   * - UR: uninspected returns
+   * - UW: used & working
+   * - NC: new condition
+   * - LN: like new
+   * - S: salvage
    */
   extractMetadata: function () {
-    let listingName = 'TechLiquidators Listing'
+    const bodyText = document.body.innerText
 
-    // Method 1: Extract from URL slug (most reliable)
-    // URL format: /detail/ptrc76333/electric-transportation-accessories-.../
-    const urlMatch = window.location.pathname.match(/\/detail\/[^/]+\/([^/]+)/)
-    if (urlMatch && urlMatch[1]) {
-      // Convert slug to title: "electric-transportation" -> "Electric Transportation"
-      listingName = urlMatch[1]
-        .split('-')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-        .substring(0, 100)
-    } else {
-      // Method 2: Try page title, remove "TechLiquidators:" prefix
-      const title = document.title
-      if (title.includes(':')) {
-        listingName = title.split(':').slice(1).join(':').trim().substring(0, 100)
-      }
+    /**
+     * Parse price string to number
+     * Handles currency symbols, commas, and non-numeric values like "TBD"
+     */
+    function parsePrice(text: string | null): number | null {
+      if (!text) return null
+      // Remove currency symbols, commas, whitespace
+      const cleaned = text.replace(/[$,\s]/g, '').trim()
+      // Handle "TBD", "N/A", "Calculated", "Free" etc
+      if (!/^\d/.test(cleaned)) return null
+      const value = parseFloat(cleaned)
+      return isNaN(value) ? null : value
     }
 
+    /**
+     * Extract bid price from DOM
+     * Look for "Current Bid", "High Bid" labels on detail pages
+     */
+    function extractBidPrice(): number | null {
+      // Try common selectors first
+      const bidSelectors = [
+        '[class*="bid-amount"]',
+        '[class*="current-bid"]',
+        '[class*="high-bid"]',
+        '[class*="bidPrice"]',
+        '[id*="currentBid"]',
+        '[id*="bidAmount"]',
+      ]
+
+      for (const selector of bidSelectors) {
+        const el = document.querySelector(selector)
+        if (el?.textContent) {
+          const parsed = parsePrice(el.textContent)
+          if (parsed !== null) return parsed
+        }
+      }
+
+      // Search for label-based patterns in page text
+      // Look for "Current Bid: $X,XXX" or "High Bid: $X,XXX" patterns
+      const bidPatterns = [
+        /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+      ]
+
+      for (const pattern of bidPatterns) {
+        const match = bodyText.match(pattern)
+        if (match) {
+          const parsed = parsePrice(match[1])
+          if (parsed !== null) return parsed
+        }
+      }
+
+      return null
+    }
+
+    /**
+     * Extract shipping fee from DOM
+     * Look for "Shipping:", "Freight:", "Estimated Shipping:" in listing details
+     */
+    function extractShippingFee(): number | null {
+      // Try common selectors first
+      const shippingSelectors = [
+        '[class*="shipping"]',
+        '[class*="freight"]',
+        '[id*="shipping"]',
+        '[id*="freight"]',
+      ]
+
+      for (const selector of shippingSelectors) {
+        const el = document.querySelector(selector)
+        if (el?.textContent) {
+          const text = el.textContent.toLowerCase()
+          // Check for free shipping
+          if (text.includes('free')) return 0
+          const parsed = parsePrice(el.textContent)
+          if (parsed !== null) return parsed
+        }
+      }
+
+      // Check for free shipping in body text
+      if (/shipping[:\s]*free/i.test(bodyText) || /free\s*shipping/i.test(bodyText)) {
+        return 0
+      }
+
+      // Look for "Shipping: $XXX" or "Freight: $XXX" patterns
+      const shippingPatterns = [
+        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+      ]
+
+      for (const pattern of shippingPatterns) {
+        const match = bodyText.match(pattern)
+        if (match) {
+          const parsed = parsePrice(match[1])
+          if (parsed !== null) return parsed
+        }
+      }
+
+      return null
+    }
+
+    // Extract title from h1 (copy extension logic exactly)
+    let title = extractTitle()
+
+    // Extract condition abbreviation
+    const conditionAbbrev = extractConditionAbbrev(bodyText)
+
+    // Extract PST military time from "(XXXX)" format on page
+    const pstTime = extractPstTime(bodyText)
+
+    // Build listing name: "Title Condition Time"
+    // Filename format: TL_<listingName>.csv (max 50 chars)
+    // TL_ = 3 chars, .csv = 4 chars, so listingName can be max 43 chars
+    // Truncate TITLE first to leave room for condition and time
+    const suffixLen = (conditionAbbrev ? conditionAbbrev.length + 1 : 0) + (pstTime ? pstTime.length + 1 : 0)
+    const maxTitleLen = Math.max(10, 43 - suffixLen)
+    if (title.length > maxTitleLen) {
+      title = title.substring(0, maxTitleLen).trim()
+    }
+
+    // Example: "Electric Transportation Accessories UR 1139"
+    const parts = [title, conditionAbbrev, pstTime].filter((p) => p.length > 0)
+    const listingName = parts.join(' ') || 'TechLiquidators Listing'
+
+    // Extract bid price and shipping fee from DOM
+    const bidPrice = extractBidPrice()
+    const shippingFee = extractShippingFee()
+
     return {
-      retailer: 'TechLiquidators',
+      retailer: 'TL',
       listingName,
-      auctionEndTime: null, // TechLiquidators doesn't have auction end times
+      auctionEndTime: null,
+      bidPrice,
+      shippingFee,
+    }
+
+    function extractTitle(): string {
+      // Copy extension logic exactly: h1.textContent.split(' - ')[0]
+      const h1 = document.querySelector('h1')
+      if (h1 && h1.textContent) {
+        return h1.textContent.trim().split(' - ')[0]
+      }
+
+      // Fallback to URL slug
+      const urlMatch = window.location.pathname.match(/\/detail\/[^/]+\/([^/]+)/)
+      if (urlMatch && urlMatch[1]) {
+        return urlMatch[1]
+          .split('-')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+      }
+      return ''
+    }
+
+    function extractConditionAbbrev(text: string): string {
+      const conditionMatch = text.match(/Condition:\s*([^\n]+)/i)
+      if (!conditionMatch) return ''
+
+      const condText = conditionMatch[1].toLowerCase()
+
+      // Check more specific conditions first
+      if (condText.includes('uninspected return')) return 'UR'
+      if (condText.includes('uninspected')) return 'UR'
+      if (condText.includes('returned') && condText.includes('damaged')) return 'RD'
+      if (condText.includes('used good')) return 'UG'
+      if (condText.includes('used fair')) return 'UF'
+      if (condText.includes('used working')) return 'UW'
+      if (condText.includes('used')) return 'UW'
+      if (condText.includes('brand new')) return 'NC'
+      if (condText.includes('like new')) return 'LN'
+      if (condText.includes('new condition')) return 'NC'
+      if (condText.includes('new')) return 'NC'
+      if (condText.includes('salvage')) return 'S'
+      if (condText.includes('damaged')) return 'D'
+      if (condText.includes('return')) return 'R'
+      if (condText.includes('overstock')) return 'OS'
+      if (condText.includes('mixed')) return 'MC'
+      if (condText.includes('data cleared')) return 'DC'
+      if (condText.includes('grade a')) return 'GA'
+      if (condText.includes('grade b')) return 'GB'
+      if (condText.includes('grade c')) return 'GC'
+
+      return ''
+    }
+
+    function extractPstTime(text: string): string {
+      // TechLiquidators shows: "End time in PST: 11:39 AM (1139 military)"
+      // Extract the military time from parentheses
+      const militaryMatch = text.match(/PST[^(]*\((\d{3,4})\s*(?:military)?\)/i)
+      if (militaryMatch) {
+        return militaryMatch[1] // e.g., "1139"
+      }
+
+      // Fallback: try to extract from "PST X:XX AM/PM" format
+      const pstMatch = text.match(/PST\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i)
+      if (pstMatch) {
+        return `${pstMatch[1]}${pstMatch[2]}`
+      }
+      return ''
     }
   },
 
