@@ -12,7 +12,6 @@ import {
   getRetailerFieldConfig,
   extractField,
   NULL_VALUES,
-  type RetailerFieldConfig,
 } from '../../src/retailers/field-mappings'
 
 describe('isNullValue', () => {
