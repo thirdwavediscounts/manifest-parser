@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** Phase 4 Complete - Ready for Phase 5
+**Current focus:** Phase 5 In Progress - Auction Metadata Extraction
 
 ## Current Position
 
-Phase: 4 of 6 (Data Processing Pipeline) - COMPLETE
-Plan: 2 of 2 in phase
-Status: Phase complete
-Last activity: 2026-01-27 - Completed 04-02-PLAN.md (Sorting and Pipeline Integration)
+Phase: 5 of 6 (Auction Metadata Extraction)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-27 - Completed 05-01-PLAN.md (Bid Price and Shipping Fee Extraction)
 
-Progress: [########..] 80%
+Progress: [#########.] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 3.9 minutes
-- Total execution time: 31 minutes
+- Total plans completed: 9
+- Average duration: 3.7 minutes
+- Total execution time: 34 minutes
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [########..] 80%
 | 2. Standard Retailer Mappings | 2/2 | 10 min | 5.0 min |
 | 3. AMZD Special Handling | 2/2 | 7 min | 3.5 min |
 | 4. Data Processing Pipeline | 2/2 | 7 min | 3.5 min |
+| 5. Auction Metadata Extraction | 1/2 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (7 min), 03-01 (3 min), 03-02 (4 min), 04-01 (3 min), 04-02 (4 min)
-- Trend: TDD tasks execute efficiently, averaging 3.5-4 minutes
+- Last 5 plans: 03-01 (3 min), 03-02 (4 min), 04-01 (3 min), 04-02 (4 min), 05-01 (3 min)
+- Trend: Consistent 3-4 minute execution times
 
 *Updated after each plan completion*
 
@@ -72,6 +73,10 @@ Recent decisions affecting current work:
 - [D04-02-01] Zero-value unit_retail sorts to end (treat as lowest priority)
 - [D04-02-02] Metadata assigned to first row of sorted output (highest-value item)
 - [D04-02-03] processRows pipeline: cleanRow map -> deduplicateRows -> sortRows
+- [D05-01-01] bidPrice/shippingFee use number | null type to distinguish not-found from 0
+- [D05-01-02] All helper functions defined inside extractMetadata() for ISOLATED world
+- [D05-01-03] AMZD bidPrice always null (fixed-price, not auction)
+- [D05-01-04] Free shipping returns 0, not found returns null
 
 ### Pending Todos
 
@@ -84,7 +89,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-02-PLAN.md (Sorting and Pipeline Integration)
+Stopped at: Completed 05-01-PLAN.md (Bid Price and Shipping Fee Extraction)
 Resume file: None
 
 ## Phase Completion Status
@@ -93,5 +98,5 @@ Resume file: None
 - [x] Phase 2: Standard Retailer Mappings (2/2 plans)
 - [x] Phase 3: AMZD Special Handling (2/2 plans)
 - [x] Phase 4: Data Processing Pipeline (2/2 plans)
-- [ ] Phase 5: Enhanced Export Features (0/2 plans)
+- [ ] Phase 5: Auction Metadata Extraction (1/2 plans)
 - [ ] Phase 6: Integration and Polish (0/2 plans)
