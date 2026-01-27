@@ -545,7 +545,7 @@ async function handleProcess(): Promise<void> {
 
       updateProgress(
         (processed / totalToProcess) * 100,
-        `Processing ${getDisplayUrl(urlItem.url)}...`
+        `Extracting from ${urlItem.retailer}...`
       )
 
       try {
@@ -574,11 +574,11 @@ async function handleProcess(): Promise<void> {
               )
 
               if (items.length > 0) {
-                // Create auction metadata (bid_price and shipping_fee populated in Phase 5)
+                // Create auction metadata with extracted bid_price and shipping_fee
                 const metadata: AuctionMetadata = {
                   auctionUrl: urlItem.url,
-                  bidPrice: null,
-                  shippingFee: null,
+                  bidPrice: result.bidPrice ?? 0,
+                  shippingFee: result.shippingFee ?? 0,
                 }
 
                 // Transform to unified format and generate CSV
@@ -616,10 +616,11 @@ async function handleProcess(): Promise<void> {
               const items = await parseManifestFromBase64(rawData.data, filename, rawData.type)
 
               if (items.length > 0) {
+                // Direct file downloads don't have page to extract metadata from
                 const metadata: AuctionMetadata = {
                   auctionUrl: urlItem.url,
-                  bidPrice: null,
-                  shippingFee: null,
+                  bidPrice: 0,
+                  shippingFee: 0,
                 }
 
                 const unifiedRows = transformToUnified(items, metadata)
@@ -660,11 +661,11 @@ async function handleProcess(): Promise<void> {
       try {
         const items = await parseLocalFile(file)
         if (items.length > 0) {
-          // Create metadata for local upload (no auction URL for local files)
+          // Local files have no auction URL or page to extract metadata from
           const metadata: AuctionMetadata = {
             auctionUrl: 'local-upload',
-            bidPrice: null,
-            shippingFee: null,
+            bidPrice: 0,
+            shippingFee: 0,
           }
 
           const unifiedRows = transformToUnified(items, metadata)
@@ -998,6 +999,8 @@ interface TabProcessResult {
   auctionEndTime: string | null
   manifestData: string | null
   manifestType: 'csv' | 'xlsx' | 'xls' | null
+  bidPrice: number | null
+  shippingFee: number | null
 }
 
 /**
@@ -1016,6 +1019,8 @@ async function processUrlInTab(url: string): Promise<TabProcessResult> {
       auctionEndTime: null,
       manifestData: null,
       manifestType: null,
+      bidPrice: null,
+      shippingFee: null,
     }
   }
 
@@ -1038,6 +1043,8 @@ async function processUrlInTab(url: string): Promise<TabProcessResult> {
     let retailer = retailerModule.displayName
     let listingName = 'Listing'
     let auctionEndTime: string | null = null
+    let bidPrice: number | null = null
+    let shippingFee: number | null = null
 
     try {
       console.log(`[ManifestParser] Extracting metadata from tab ${tabId}`)
@@ -1052,6 +1059,8 @@ async function processUrlInTab(url: string): Promise<TabProcessResult> {
         retailer = metadata.retailer
         listingName = metadata.listingName
         auctionEndTime = metadata.auctionEndTime
+        bidPrice = metadata.bidPrice
+        shippingFee = metadata.shippingFee
       } else {
         console.warn(`[ManifestParser] No metadata result. Full result:`, JSON.stringify(metadataResult))
       }
@@ -1118,7 +1127,7 @@ async function processUrlInTab(url: string): Promise<TabProcessResult> {
       console.log(`[ManifestParser] No manifest data captured for ${url}`)
     }
 
-    return { retailer, listingName, auctionEndTime, manifestData, manifestType }
+    return { retailer, listingName, auctionEndTime, manifestData, manifestType, bidPrice, shippingFee }
   } finally {
     // Always close the tab, even if errors occurred
     try {
