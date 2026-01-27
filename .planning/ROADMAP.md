@@ -13,7 +13,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - [x] **Phase 1: Unified Format Foundation** - Establish unified CSV structure and transformation pipeline
 - [x] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
 - [x] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
-- [ ] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
+- [x] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
 - [ ] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
 - [ ] **Phase 6: UI Integration** - User toggle between raw and unified format
 
@@ -79,8 +79,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — TDD: Data cleaning and deduplication functions
-- [ ] 04-02-PLAN.md — TDD: Sorting and pipeline integration
+- [x] 04-01-PLAN.md — TDD: Data cleaning and deduplication functions
+- [x] 04-02-PLAN.md — TDD: Sorting and pipeline integration
 
 ### Phase 5: Auction Metadata Extraction
 **Goal**: Extract bid price and shipping fee from auction listing pages
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Unified Format Foundation | 2/2 | Complete | 2026-01-27 |
 | 2. Standard Retailer Mappings | 2/2 | Complete | 2026-01-27 |
 | 3. AMZD Special Handling | 2/2 | Complete | 2026-01-27 |
-| 4. Data Processing Pipeline | 0/2 | Not started | - |
+| 4. Data Processing Pipeline | 2/2 | Complete | 2026-01-27 |
 | 5. Auction Metadata Extraction | 0/2 | Not started | - |
 | 6. UI Integration | 0/1 | Not started | - |
 
