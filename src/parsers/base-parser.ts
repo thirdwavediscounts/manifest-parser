@@ -1,6 +1,7 @@
 import type { ManifestItem, FieldMapping, RawRow } from './types'
 import { getBstockFieldMapping } from './bstock-parser'
 import { getTechLiquidatorsFieldMapping } from './techliquidators-parser'
+import { parseAmzdRow } from './amzd-parser'
 import { getRetailerFieldConfig, isNullValue } from '../retailers'
 
 /**
@@ -39,6 +40,45 @@ function getFieldMapping(site: string): FieldMapping {
     unitRetail: config.unitRetail.map((col) => col.toLowerCase()),
     quantity: config.qty.map((col) => col.toLowerCase()),
   }
+}
+
+/**
+ * Parse AMZD (Amazon Direct) manifest with special handling
+ *
+ * AMZD manifests require special handling due to:
+ * - Misaligned columns (unquoted commas in titles)
+ * - ASIN-based identification (not UPC)
+ * - 4.5x price multiplier for unit retail
+ */
+function parseAmzdManifest(
+  rawData: Record<string, unknown>[],
+  site: string,
+  filename: string
+): ManifestItem[] {
+  if (rawData.length === 0) return []
+
+  const headers = Object.keys(rawData[0])
+  const items: ManifestItem[] = []
+  const parsedDate = new Date().toISOString()
+
+  for (const row of rawData) {
+    const cells = Object.values(row)
+    const parsed = parseAmzdRow(row, cells, headers)
+
+    if (parsed) {
+      items.push({
+        upc: parsed.asin,
+        productName: parsed.productName || 'Unknown Product',
+        quantity: parsed.qty,
+        unitRetail: parsed.unitRetail,
+        sourceSite: site,
+        originalFilename: filename,
+        parsedDate,
+      })
+    }
+  }
+
+  return items
 }
 
 /**
