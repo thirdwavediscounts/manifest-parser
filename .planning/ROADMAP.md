@@ -58,7 +58,7 @@ Plans:
   1. AMZD manifest prices extracted correctly from -2 column position (right-anchored)
   2. AMZD manifest quantities extracted correctly from -3 column position
   3. ASIN found by B0XXXXXXXXX pattern scan regardless of column position
-  4. Item Title used directly for product_name (fallback: Model → Brand)
+  4. Item Title used directly for product_name (fallback: Model -> Brand)
   5. unit_retail calculated as Lot item price * 4.5
 **Plans**: 2 plans
 
@@ -91,11 +91,11 @@ Plans:
   2. shipping_fee extracted from auction listing page during tab processing
   3. auction_url captured and included in unified output first row
   4. Metadata extraction works for B-Stock, TechLiquidators, and Amazon Direct pages
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Implement metadata extraction for each retailer type
-- [ ] 05-02: Integrate metadata into unified output generation
+- [ ] 05-01-PLAN.md — Extend MetadataResult and implement extraction in retailer modules
+- [ ] 05-02-PLAN.md — Integrate extracted metadata into popup and CSV output
 
 ### Phase 6: UI Integration
 **Goal**: User can choose between raw files and unified format at download time
