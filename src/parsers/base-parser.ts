@@ -1,91 +1,28 @@
 import type { ManifestItem, FieldMapping, RawRow } from './types'
 import { getBstockFieldMapping } from './bstock-parser'
 import { getTechLiquidatorsFieldMapping } from './techliquidators-parser'
-
-/**
- * Default field mapping for unknown sources
- * Maps common column name variations to unified fields
- */
-const defaultFieldMapping: FieldMapping = {
-  upc: [
-    'upc',
-    'upc code',
-    'upc_code',
-    'item #',
-    'item number',
-    'item_number',
-    'sku',
-    'product code',
-    'barcode',
-    'ean',
-    'asin',
-    'model',
-    'model number',
-    'model_number',
-    'part number',
-    'part_number',
-    'item id',
-    'item_id',
-    'product id',
-    'product_id',
-  ],
-  productName: [
-    'product name',
-    'product_name',
-    'name',
-    'description',
-    'item description',
-    'item_description',
-    'product description',
-    'product_description',
-    'title',
-    'item name',
-    'item_name',
-    'product',
-    'item',
-  ],
-  unitRetail: [
-    'unit retail',
-    'unit_retail',
-    'retail',
-    'retail price',
-    'retail_price',
-    'msrp',
-    'price',
-    'unit price',
-    'unit_price',
-    'original price',
-    'original_price',
-    'list price',
-    'list_price',
-  ],
-  quantity: [
-    'quantity',
-    'qty',
-    'units',
-    'count',
-    'item count',
-    'item_count',
-    'unit count',
-    'unit_count',
-    'total units',
-    'total_units',
-    'pallet qty',
-    'pallet_qty',
-  ],
-}
+import { getRetailerFieldConfig, isNullValue } from '../retailers'
 
 /**
  * Get field mapping for a specific site
+ * Uses retailer-specific configurations from field-mappings.ts
  */
 function getFieldMapping(site: string): FieldMapping {
+  // Legacy site-specific handlers (for backwards compatibility)
   switch (site) {
     case 'bstock':
       return getBstockFieldMapping()
     case 'techliquidators':
       return getTechLiquidatorsFieldMapping()
-    default:
-      return defaultFieldMapping
+  }
+
+  // Use retailer field config for all other retailers
+  const config = getRetailerFieldConfig(site)
+  return {
+    upc: config.itemNumber.map((col) => col.toLowerCase()),
+    productName: config.productName.map((col) => col.toLowerCase()),
+    unitRetail: config.unitRetail.map((col) => col.toLowerCase()),
+    quantity: config.qty.map((col) => col.toLowerCase()),
   }
 }
 
@@ -182,16 +119,19 @@ function parseRow(
 
 /**
  * Extract string value from row
+ * Applies null-value detection - values like "NOT AVAILABLE", "N/A" return empty string
  */
 function extractString(row: RawRow, column: string | null): string {
   if (!column || row[column] === undefined || row[column] === null) {
     return ''
   }
-  return String(row[column]).trim()
+  const value = String(row[column]).trim()
+  return isNullValue(value) ? '' : value
 }
 
 /**
  * Extract number value from row
+ * Applies null-value detection - values like "N/A", "NOT AVAILABLE" return 0
  */
 function extractNumber(row: RawRow, column: string | null): number {
   if (!column || row[column] === undefined || row[column] === null) {
@@ -204,8 +144,14 @@ function extractNumber(row: RawRow, column: string | null): number {
     return value
   }
 
+  // Check for null values before parsing
+  const strValue = String(value).trim()
+  if (isNullValue(strValue)) {
+    return 0
+  }
+
   // Parse string value, removing currency symbols and commas
-  const cleaned = String(value).replace(/[$,]/g, '').trim()
+  const cleaned = strValue.replace(/[$,]/g, '')
   const parsed = parseFloat(cleaned)
 
   return isNaN(parsed) ? 0 : parsed
