@@ -14,9 +14,11 @@ import {
 } from '../services/google-sheets'
 import {
   createZipFromUnifiedManifests,
+  createZipFromRawFiles,
   downloadZip,
   generateZipFilename,
   type UnifiedZipEntry,
+  type RawZipEntry,
 } from '../utils/zip-export'
 import {
   getProxySettings,
@@ -544,7 +546,7 @@ function updateProcessButton(): void {
 
 /**
  * Handle process button click
- * Downloads manifests, transforms to unified format, and creates ZIP
+ * Downloads manifests in either raw format (original files) or unified format (transformed CSV)
  */
 async function handleProcess(): Promise<void> {
   state.isProcessing = true
@@ -552,8 +554,12 @@ async function handleProcess(): Promise<void> {
   updateProcessButton()
   showProgress()
 
-  // Unified entries for processed manifests (transformed to unified CSV format)
+  const isRawMode = state.formatMode === 'raw'
+
+  // Entries for ZIP based on mode
   const unifiedEntries: UnifiedZipEntry[] = []
+  const rawEntries: RawZipEntry[] = []
+
   // Track totals for display
   let totalItems = 0
   let totalRetailValue = 0
@@ -564,7 +570,7 @@ async function handleProcess(): Promise<void> {
   let processed = 0
 
   try {
-    // Process URLs from sheet - download, parse, and transform to unified format
+    // Process URLs from sheet
     for (const urlItem of selectedUrls) {
       // Check for cancellation
       if (state.isCancelled) {
@@ -599,92 +605,146 @@ async function handleProcess(): Promise<void> {
           )
           updateUrlListUI()
 
-          // Transform to unified format
           if (result.manifestData && result.manifestType) {
-            try {
-              // Parse raw base64 data via background worker to get ManifestItem[]
-              const items = await parseManifestFromBase64(
-                result.manifestData,
-                filename,
-                result.manifestType
-              )
+            if (isRawMode) {
+              // RAW MODE: Keep original file data without transformation
+              // Determine correct extension based on manifest type
+              const ext = result.manifestType
+              const rawFilename = filename.replace(/\.csv$/, `.${ext}`)
+              rawEntries.push({
+                filename: rawFilename,
+                data: result.manifestData,
+                retailer,
+                sourceUrl: urlItem.url,
+                fileType: result.manifestType,
+              })
 
-              if (items.length > 0) {
-                // Create auction metadata with extracted bid_price and shipping_fee
-                const metadata: AuctionMetadata = {
-                  auctionUrl: urlItem.url,
-                  bidPrice: result.bidPrice ?? 0,
-                  shippingFee: result.shippingFee ?? 0,
-                }
-
-                // Transform to unified format and generate CSV
-                const unifiedRows = transformToUnified(items, metadata)
-                const csvContent = generateUnifiedCsv(unifiedRows, metadata)
-
-                unifiedEntries.push({
-                  filename: filename.replace(/\.(xlsx|xls)$/, '.csv'),
-                  csvContent,
-                  retailer,
-                  sourceUrl: urlItem.url,
-                })
-
-                // Track totals
+              // Still parse for totals display (but don't transform)
+              try {
+                const items = await parseManifestFromBase64(
+                  result.manifestData,
+                  filename,
+                  result.manifestType
+                )
                 totalItems += items.length
                 totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
-
-                console.log(`[ManifestParser] Added unified entry: ${filename}, ${items.length} items`)
-              } else {
-                console.log(`[ManifestParser] No items parsed from ${urlItem.url}`)
+              } catch {
+                // Ignore parse errors for raw mode - file is still added
               }
-            } catch (parseError) {
-              console.error(`[ManifestParser] Failed to parse manifest from ${urlItem.url}:`, parseError)
+
+              console.log(`[ManifestParser] Added raw entry: ${rawFilename}`)
+            } else {
+              // UNIFIED MODE: Parse and transform to unified CSV format
+              try {
+                const items = await parseManifestFromBase64(
+                  result.manifestData,
+                  filename,
+                  result.manifestType
+                )
+
+                if (items.length > 0) {
+                  const metadata: AuctionMetadata = {
+                    auctionUrl: urlItem.url,
+                    bidPrice: result.bidPrice ?? 0,
+                    shippingFee: result.shippingFee ?? 0,
+                  }
+
+                  const unifiedRows = transformToUnified(items, metadata)
+                  const csvContent = generateUnifiedCsv(unifiedRows, metadata)
+
+                  unifiedEntries.push({
+                    filename: filename.replace(/\.(xlsx|xls)$/, '.csv'),
+                    csvContent,
+                    retailer,
+                    sourceUrl: urlItem.url,
+                  })
+
+                  totalItems += items.length
+                  totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+
+                  console.log(`[ManifestParser] Added unified entry: ${filename}, ${items.length} items`)
+                } else {
+                  console.log(`[ManifestParser] No items parsed from ${urlItem.url}`)
+                }
+              } catch (parseError) {
+                console.error(`[ManifestParser] Failed to parse manifest from ${urlItem.url}:`, parseError)
+                throw new Error(`Failed to transform to unified format: ${parseError instanceof Error ? parseError.message : 'Parse error'}`)
+              }
             }
           } else {
             console.log(`[ManifestParser] No manifest data for ${urlItem.url}`)
           }
         } else {
-          // Direct file URL - download and transform
+          // Direct file URL - download
           console.log(`[ManifestParser] Direct download: ${urlItem.url}`)
           const rawData = await downloadRawFile(urlItem.url)
           if (rawData.data) {
-            try {
-              const filename = generateFilename(urlItem.url, retailer)
-              const items = await parseManifestFromBase64(rawData.data, filename, rawData.type)
+            const filename = generateFilename(urlItem.url, retailer)
 
-              if (items.length > 0) {
-                // Direct file downloads don't have page to extract metadata from
-                const metadata: AuctionMetadata = {
-                  auctionUrl: urlItem.url,
-                  bidPrice: 0,
-                  shippingFee: 0,
-                }
+            if (isRawMode) {
+              // RAW MODE: Keep original file data
+              rawEntries.push({
+                filename,
+                data: rawData.data,
+                retailer,
+                sourceUrl: urlItem.url,
+                fileType: rawData.type,
+              })
 
-                const unifiedRows = transformToUnified(items, metadata)
-                const csvContent = generateUnifiedCsv(unifiedRows, metadata)
-
-                unifiedEntries.push({
-                  filename: filename.replace(/\.(xlsx|xls)$/, '.csv'),
-                  csvContent,
-                  retailer,
-                  sourceUrl: urlItem.url,
-                })
-
+              // Still parse for totals display
+              try {
+                const items = await parseManifestFromBase64(rawData.data, filename, rawData.type)
                 totalItems += items.length
                 totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+              } catch {
+                // Ignore parse errors for raw mode
               }
-            } catch (parseError) {
-              console.error(`[ManifestParser] Failed to parse ${urlItem.url}:`, parseError)
+
+              console.log(`[ManifestParser] Added raw entry: ${filename}`)
+            } else {
+              // UNIFIED MODE: Parse and transform
+              try {
+                const items = await parseManifestFromBase64(rawData.data, filename, rawData.type)
+
+                if (items.length > 0) {
+                  const metadata: AuctionMetadata = {
+                    auctionUrl: urlItem.url,
+                    bidPrice: 0,
+                    shippingFee: 0,
+                  }
+
+                  const unifiedRows = transformToUnified(items, metadata)
+                  const csvContent = generateUnifiedCsv(unifiedRows, metadata)
+
+                  unifiedEntries.push({
+                    filename: filename.replace(/\.(xlsx|xls)$/, '.csv'),
+                    csvContent,
+                    retailer,
+                    sourceUrl: urlItem.url,
+                  })
+
+                  totalItems += items.length
+                  totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+                }
+              } catch (parseError) {
+                console.error(`[ManifestParser] Failed to parse ${urlItem.url}:`, parseError)
+                throw new Error(`Failed to transform to unified format: ${parseError instanceof Error ? parseError.message : 'Parse error'}`)
+              }
             }
           }
         }
       } catch (error) {
         console.error(`Failed to process ${urlItem.url}:`, error)
+        // In unified mode, errors are fatal (per CONTEXT.md: no automatic fallback)
+        if (!isRawMode) {
+          throw error
+        }
       }
 
       processed++
     }
 
-    // Process uploaded files - parse and transform to unified format
+    // Process uploaded files
     for (const file of state.uploadedFiles) {
       // Check for cancellation
       if (state.isCancelled) {
@@ -692,33 +752,60 @@ async function handleProcess(): Promise<void> {
         break
       }
 
-      updateProgress((processed / totalToProcess) * 100, `Parsing ${file.name}...`)
+      updateProgress((processed / totalToProcess) * 100, `Processing ${file.name}...`)
 
       try {
-        const items = await parseLocalFile(file)
-        if (items.length > 0) {
-          // Local files have no auction URL or page to extract metadata from
-          const metadata: AuctionMetadata = {
-            auctionUrl: 'local-upload',
-            bidPrice: 0,
-            shippingFee: 0,
-          }
-
-          const unifiedRows = transformToUnified(items, metadata)
-          const csvContent = generateUnifiedCsv(unifiedRows, metadata)
-
-          unifiedEntries.push({
-            filename: file.name.replace(/\.(xlsx|xls)$/, '.csv'),
-            csvContent,
+        if (isRawMode) {
+          // RAW MODE: Keep original file data
+          const base64 = await fileToBase64(file)
+          rawEntries.push({
+            filename: file.name,
+            data: base64,
             retailer: 'manual',
             sourceUrl: 'local-upload',
+            fileType: getFileType(file.name),
           })
 
-          totalItems += items.length
-          totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+          // Still parse for totals display
+          try {
+            const items = await parseLocalFile(file)
+            totalItems += items.length
+            totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+          } catch {
+            // Ignore parse errors for raw mode
+          }
+
+          console.log(`[ManifestParser] Added raw entry: ${file.name}`)
+        } else {
+          // UNIFIED MODE: Parse and transform
+          const items = await parseLocalFile(file)
+          if (items.length > 0) {
+            const metadata: AuctionMetadata = {
+              auctionUrl: 'local-upload',
+              bidPrice: 0,
+              shippingFee: 0,
+            }
+
+            const unifiedRows = transformToUnified(items, metadata)
+            const csvContent = generateUnifiedCsv(unifiedRows, metadata)
+
+            unifiedEntries.push({
+              filename: file.name.replace(/\.(xlsx|xls)$/, '.csv'),
+              csvContent,
+              retailer: 'manual',
+              sourceUrl: 'local-upload',
+            })
+
+            totalItems += items.length
+            totalRetailValue += items.reduce((sum, i) => sum + i.unitRetail * i.quantity, 0)
+          }
         }
       } catch (error) {
-        console.error(`Failed to parse ${file.name}:`, error)
+        console.error(`Failed to process ${file.name}:`, error)
+        // In unified mode, errors are fatal
+        if (!isRawMode) {
+          throw error
+        }
       }
 
       processed++
@@ -733,26 +820,29 @@ async function handleProcess(): Promise<void> {
 
     updateProgress(95, 'Creating ZIP file...')
 
-    if (unifiedEntries.length === 0) {
+    const entryCount = isRawMode ? rawEntries.length : unifiedEntries.length
+    if (entryCount === 0) {
       alert('No valid manifest data found')
       hideProgress()
       return
     }
 
-    // Create ZIP from unified entries
-    const zipBlob = await createZipFromUnifiedManifests(unifiedEntries)
+    // Create ZIP based on mode
+    const zipBlob = isRawMode
+      ? await createZipFromRawFiles(rawEntries)
+      : await createZipFromUnifiedManifests(unifiedEntries)
 
     state.lastZipBlob = zipBlob
 
     // Store totals for results display
-    state.results.files = unifiedEntries.length
+    state.results.files = entryCount
     state.results.items = totalItems
     state.results.retailValue = totalRetailValue
 
     updateProgress(100, 'Complete!')
 
     // Download ZIP
-    downloadZip(zipBlob, generateZipFilename(unifiedEntries.length))
+    downloadZip(zipBlob, generateZipFilename(entryCount))
 
     // Clear processing state and save results
     state.processingProgress = null
