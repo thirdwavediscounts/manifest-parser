@@ -1,5 +1,6 @@
 import type { ManifestItem } from '../parsers/types'
 import type { AuctionMetadata, UnifiedManifestRow } from './types'
+import { processRows } from './processing'
 
 /**
  * CSV column headers in the exact order expected by Retool
@@ -21,29 +22,42 @@ const UTF8_BOM = '\ufeff'
 
 /**
  * Transform ManifestItem array to UnifiedManifestRow array
- * Metadata is included only on the first row
+ * Processing pipeline: clean -> deduplicate -> sort by unit_retail DESC
+ * Metadata is included only on the first row (which is now the highest-value item)
  */
 export function transformToUnified(
   items: ManifestItem[],
   metadata: AuctionMetadata
 ): UnifiedManifestRow[] {
-  return items.map((item, index) => {
-    const isFirstRow = index === 0
+  if (items.length === 0) {
+    return []
+  }
 
-    return {
-      item_number: item.upc,
-      product_name: item.productName,
-      qty: Math.round(item.quantity),
-      unit_retail: item.unitRetail,
-      auction_url: isFirstRow ? metadata.auctionUrl : '',
-      bid_price: isFirstRow && metadata.bidPrice !== null
-        ? formatPrice(metadata.bidPrice)
-        : '',
-      shipping_fee: isFirstRow && metadata.shippingFee !== null
-        ? formatPrice(metadata.shippingFee)
-        : '',
+  // Step 1: Map ManifestItems to basic rows (no metadata yet)
+  const basicRows: UnifiedManifestRow[] = items.map(item => ({
+    item_number: item.upc,
+    product_name: item.productName,
+    qty: Math.round(item.quantity),
+    unit_retail: item.unitRetail,
+    auction_url: '',
+    bid_price: '',
+    shipping_fee: '',
+  }))
+
+  // Step 2: Process rows (clean -> deduplicate -> sort)
+  const processedRows = processRows(basicRows)
+
+  // Step 3: Add metadata to first processed row (highest-value item after sorting)
+  if (processedRows.length > 0) {
+    processedRows[0] = {
+      ...processedRows[0],
+      auction_url: metadata.auctionUrl,
+      bid_price: metadata.bidPrice !== null ? formatPrice(metadata.bidPrice) : '',
+      shipping_fee: metadata.shippingFee !== null ? formatPrice(metadata.shippingFee) : '',
     }
-  })
+  }
+
+  return processedRows
 }
 
 /**

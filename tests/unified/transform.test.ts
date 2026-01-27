@@ -93,7 +93,7 @@ describe('transformToUnified', () => {
     expect(result[0].shipping_fee).toBe('')
   })
 
-  it('should transform multiple items correctly', () => {
+  it('should transform multiple items and sort by unit_retail descending', () => {
     const items = [
       createManifestItem({ upc: '111', productName: 'Product A', unitRetail: 10.00, quantity: 2 }),
       createManifestItem({ upc: '222', productName: 'Product B', unitRetail: 20.50, quantity: 3 }),
@@ -101,10 +101,17 @@ describe('transformToUnified', () => {
     const result = transformToUnified(items, defaultMetadata)
 
     expect(result).toHaveLength(2)
-    expect(result[0].item_number).toBe('111')
-    expect(result[0].product_name).toBe('Product A')
-    expect(result[1].item_number).toBe('222')
-    expect(result[1].product_name).toBe('Product B')
+    // Sorted by unit_retail DESC: 20.50 > 10.00
+    expect(result[0].item_number).toBe('222')
+    expect(result[0].product_name).toBe('Product B')
+    expect(result[0].unit_retail).toBe(20.50)
+    // First row has metadata (highest value item)
+    expect(result[0].auction_url).toBe('https://example.com/auction/123')
+    expect(result[1].item_number).toBe('111')
+    expect(result[1].product_name).toBe('Product A')
+    expect(result[1].unit_retail).toBe(10.00)
+    // Second row has no metadata
+    expect(result[1].auction_url).toBe('')
   })
 })
 
@@ -235,7 +242,7 @@ describe('generateUnifiedCsv', () => {
 })
 
 describe('integration: transformToUnified + generateUnifiedCsv', () => {
-  it('should produce valid CSV from ManifestItems', () => {
+  it('should produce valid CSV from ManifestItems (sorted by unit_retail DESC)', () => {
     const items: ManifestItem[] = [
       {
         upc: '123456789012',
@@ -272,18 +279,21 @@ describe('integration: transformToUnified + generateUnifiedCsv', () => {
     // Verify header
     expect(lines[0]).toBe('item_number,product_name,qty,unit_retail,auction_url,bid_price,shipping_fee')
 
-    // Verify first row has metadata (note: Gadget Deluxe is quoted due to comma)
-    expect(lines[1]).toContain('123456789012')
-    expect(lines[1]).toContain('Widget')
-    expect(lines[1]).toContain('29.99')
+    // First row is now Gadget (49.00 > 29.99, sorted by unit_retail DESC)
+    // Gadget Deluxe is quoted due to comma in name
+    expect(lines[1]).toContain('987654321098')
+    expect(lines[1]).toContain('"Gadget, Deluxe"')
+    expect(lines[1]).toContain('49') // No trailing zeros
+    // First row has metadata (highest value item)
     expect(lines[1]).toContain('https://example.com/auction/456')
     expect(lines[1]).toContain('200.5') // No trailing zero
     expect(lines[1]).toContain('30') // No trailing zeros
 
-    // Verify second row has no metadata
-    expect(lines[2]).toContain('987654321098')
-    expect(lines[2]).toContain('"Gadget, Deluxe"') // Quoted due to comma
-    expect(lines[2]).toContain('49') // No trailing zeros
+    // Second row is Widget (lower unit_retail)
+    expect(lines[2]).toContain('123456789012')
+    expect(lines[2]).toContain('Widget')
+    expect(lines[2]).toContain('29.99')
+    // Second row has no metadata
     expect(lines[2]).toMatch(/,,,\s*$/) // Empty metadata columns
   })
 })
