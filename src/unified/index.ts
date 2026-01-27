@@ -7,3 +7,9 @@ export type {
 
 // Functions
 export { transformToUnified, generateUnifiedCsv } from './transform'
+export {
+  cleanField,
+  cleanRow,
+  normalizeItemNumber,
+  deduplicateRows,
+} from './processing'
