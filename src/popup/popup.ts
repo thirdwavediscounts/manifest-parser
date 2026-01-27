@@ -51,6 +51,8 @@ interface PopupState {
     total: number
     currentUrl: string
   } | null
+  // Format mode: 'raw' downloads original files, 'unified' transforms to unified CSV
+  formatMode: 'raw' | 'unified'
 }
 
 const state: PopupState = {
@@ -63,6 +65,7 @@ const state: PopupState = {
   lastZipBlob: null,
   results: { files: 0, items: 0, retailValue: 0 },
   processingProgress: null,
+  formatMode: 'raw',
 }
 
 /**
@@ -76,6 +79,7 @@ async function saveState(): Promise<void> {
     results: state.results,
     isProcessing: state.isProcessing,
     processingProgress: state.processingProgress,
+    formatMode: state.formatMode,
   }
   await chrome.storage.local.set({ popupState: persistableState })
 }
@@ -92,11 +96,17 @@ async function loadState(): Promise<void> {
     state.results = saved.results || { files: 0, items: 0, retailValue: 0 }
     state.isProcessing = saved.isProcessing || false
     state.processingProgress = saved.processingProgress || null
+    state.formatMode = saved.formatMode || 'raw'
   }
 }
 
 // DOM Elements
 const elements = {
+  // Format toggle
+  formatToggle: document.getElementById('format-toggle') as HTMLInputElement,
+  labelRaw: document.getElementById('label-raw') as HTMLSpanElement,
+  labelUnified: document.getElementById('label-unified') as HTMLSpanElement,
+
   // Auth
   signedOut: document.getElementById('signed-out') as HTMLDivElement,
   signedIn: document.getElementById('signed-in') as HTMLDivElement,
@@ -177,6 +187,11 @@ async function init(): Promise<void> {
       `Processing ${state.processingProgress.currentUrl}...`
     )
   }
+
+  // Restore format toggle state
+  elements.formatToggle.checked = state.formatMode === 'unified'
+  updateToggleLabels()
+
   updateProcessButton()
 }
 
@@ -184,6 +199,9 @@ async function init(): Promise<void> {
  * Set up event listeners
  */
 function setupEventListeners(): void {
+  // Format toggle
+  elements.formatToggle.addEventListener('change', handleFormatToggle)
+
   // Auth
   elements.signInBtn.addEventListener('click', handleSignIn)
   elements.signOutBtn.addEventListener('click', handleSignOut)
@@ -336,6 +354,24 @@ async function handleSaveProxy(): Promise<void> {
     elements.proxyStatus.textContent = `Error: ${error instanceof Error ? error.message : 'Failed to save'}`
     elements.proxyStatus.className = 'help-text error'
   }
+}
+
+/**
+ * Handle format toggle change
+ */
+async function handleFormatToggle(): Promise<void> {
+  state.formatMode = elements.formatToggle.checked ? 'unified' : 'raw'
+  updateToggleLabels()
+  await saveState()
+}
+
+/**
+ * Update toggle label visual states
+ */
+function updateToggleLabels(): void {
+  const isUnified = state.formatMode === 'unified'
+  elements.labelRaw.classList.toggle('active', !isUnified)
+  elements.labelUnified.classList.toggle('active', isUnified)
 }
 
 /**
