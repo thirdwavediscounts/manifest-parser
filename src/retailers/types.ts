@@ -31,6 +31,10 @@ export interface MetadataResult {
   listingName: string
   /** Auction end time (ISO string) or null */
   auctionEndTime: string | null
+  /** Current bid amount (null if not found or not applicable, e.g., fixed-price) */
+  bidPrice: number | null
+  /** Shipping cost (null if TBD or not found) */
+  shippingFee: number | null
 }
 
 /**
