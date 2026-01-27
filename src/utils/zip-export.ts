@@ -2,6 +2,16 @@ import JSZip from 'jszip'
 import type { ManifestItem } from '../parsers/types'
 import { generateCsvContent } from './csv-export'
 
+/**
+ * Unified format entry for ZIP (already-transformed CSV content)
+ */
+export interface UnifiedZipEntry {
+  filename: string
+  csvContent: string // Already-generated unified CSV string
+  retailer: string
+  sourceUrl: string
+}
+
 export interface ZipEntry {
   filename: string
   items: ManifestItem[]
@@ -88,6 +98,42 @@ export async function createZipFromRawFiles(entries: RawZipEntry[]): Promise<Blo
 
     usedFilenames.add(filename)
     zip.file(filename, bytes)
+  }
+
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
+  })
+}
+
+/**
+ * Create a ZIP file containing unified CSV files
+ * Takes already-transformed CSV content strings
+ */
+export async function createZipFromUnifiedManifests(entries: UnifiedZipEntry[]): Promise<Blob> {
+  const zip = new JSZip()
+  const usedFilenames = new Set<string>()
+
+  for (const entry of entries) {
+    // Ensure filename ends with .csv
+    let filename = entry.filename
+    if (!filename.toLowerCase().endsWith('.csv')) {
+      filename = filename.replace(/\.[^.]+$/, '') + '.csv'
+    }
+
+    // Ensure unique filename
+    if (usedFilenames.has(filename)) {
+      const base = filename.replace(/\.csv$/i, '')
+      let counter = 2
+      while (usedFilenames.has(`${base}_${counter}.csv`)) {
+        counter++
+      }
+      filename = `${base}_${counter}.csv`
+    }
+
+    usedFilenames.add(filename)
+    zip.file(filename, entry.csvContent)
   }
 
   return await zip.generateAsync({
