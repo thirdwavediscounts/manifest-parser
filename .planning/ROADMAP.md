@@ -10,7 +10,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Unified Format Foundation** - Establish unified CSV structure and transformation pipeline
+- [x] **Phase 1: Unified Format Foundation** - Establish unified CSV structure and transformation pipeline
 - [ ] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
 - [ ] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
 - [ ] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
@@ -31,8 +31,8 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — TDD: Core unified format types and transformation
-- [ ] 01-02-PLAN.md — Integrate unified format into download pipeline
+- [x] 01-01-PLAN.md — TDD: Core unified format types and transformation
+- [x] 01-02-PLAN.md — Integrate unified format into download pipeline
 
 ### Phase 2: Standard Retailer Mappings
 **Goal**: Map 10 retailers with standard column patterns to unified format
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Unified Format Foundation | 0/2 | Planned | - |
+| 1. Unified Format Foundation | 2/2 | Complete | 2026-01-27 |
 | 2. Standard Retailer Mappings | 0/2 | Not started | - |
 | 3. AMZD Special Handling | 0/2 | Not started | - |
 | 4. Data Processing Pipeline | 0/2 | Not started | - |
