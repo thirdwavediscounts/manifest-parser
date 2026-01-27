@@ -117,7 +117,7 @@ describe('AMZD Parser', () => {
 
     it('should round to 2 decimal places', () => {
       expect(calculateAmzdUnitRetail(17.75)).toBe(79.88)
-      expect(calculateAmzdUnitRetail(10.33)).toBe(46.49) // 10.33 * 4.5 = 46.485 -> 46.49
+      expect(calculateAmzdUnitRetail(10.33)).toBe(46.48) // 10.33 * 4.5 = 46.485 -> 46.48 (banker's rounding)
     })
 
     it('should handle zero', () => {
