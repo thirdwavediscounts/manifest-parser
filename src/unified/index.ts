@@ -12,4 +12,6 @@ export {
   cleanRow,
   normalizeItemNumber,
   deduplicateRows,
+  sortRows,
+  processRows,
 } from './processing'

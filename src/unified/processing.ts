@@ -157,3 +157,60 @@ function mergeGroup(rows: UnifiedManifestRow[]): UnifiedManifestRow {
     shipping_fee: firstRow.shipping_fee,
   }
 }
+
+/**
+ * Sort rows by unit_retail descending (highest first), then by product_name ascending (alphabetical)
+ * Rows with unit_retail = 0 are placed at the end
+ *
+ * Sort is stable: preserves relative order for equal keys
+ * Does NOT mutate the original array
+ */
+export function sortRows(rows: UnifiedManifestRow[]): UnifiedManifestRow[] {
+  if (rows.length === 0) {
+    return []
+  }
+
+  // Create a copy to avoid mutating the original
+  return [...rows].sort((a, b) => {
+    const aRetail = a.unit_retail
+    const bRetail = b.unit_retail
+
+    // Handle zero-value items: they sort LAST
+    const aIsZero = aRetail === 0
+    const bIsZero = bRetail === 0
+
+    if (aIsZero && !bIsZero) {
+      return 1 // a goes after b
+    }
+    if (!aIsZero && bIsZero) {
+      return -1 // a goes before b
+    }
+
+    // Both zero or both non-zero: compare by unit_retail descending
+    if (aRetail !== bRetail) {
+      return bRetail - aRetail // Descending
+    }
+
+    // Equal unit_retail: compare by product_name ascending (case-insensitive)
+    return a.product_name.toLowerCase().localeCompare(b.product_name.toLowerCase())
+  })
+}
+
+/**
+ * Full processing pipeline: clean -> deduplicate -> sort
+ * Applies all processing steps in order and returns the final result
+ */
+export function processRows(rows: UnifiedManifestRow[]): UnifiedManifestRow[] {
+  if (rows.length === 0) {
+    return []
+  }
+
+  // Step 1: Clean each row
+  const cleanedRows = rows.map(cleanRow)
+
+  // Step 2: Deduplicate
+  const deduplicatedRows = deduplicateRows(cleanedRows)
+
+  // Step 3: Sort
+  return sortRows(deduplicatedRows)
+}
