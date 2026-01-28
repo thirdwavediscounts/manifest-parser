@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** Phase 8 - Metadata DOM Audit (complete)
+**Current focus:** Phase 9 - Raw Manifest Enhancement (in progress)
 
 ## Current Position
 
-Phase: 8 of 9 (Metadata DOM Audit)
-Plan: 2 of 2 in phase
-Status: Phase complete
-Last activity: 2026-01-28 - Completed 08-02-PLAN.md (E2E Selector Tests)
+Phase: 9 of 9 (Raw Manifest Enhancement)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-28 - Completed 09-01-PLAN.md (Raw Metadata Append)
 
-Progress: [###############] 100% (15/15 plans)
+Progress: [################] 100% (16/16 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 3.5 minutes
-- Total execution time: 51 minutes
+- Total plans completed: 16
+- Average duration: 3.4 minutes
+- Total execution time: 55 minutes
 
 **By Phase:**
 
@@ -35,9 +35,10 @@ Progress: [###############] 100% (15/15 plans)
 | 6. UI Integration | 1/1 | 4 min | 4.0 min |
 | 7. File Naming Optimization | 2/2 | 5 min | 2.5 min |
 | 8. Metadata DOM Audit | 2/2 | 9 min | 4.5 min |
+| 9. Raw Manifest Enhancement | 1/2 | 4 min | 4.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (4 min), 07-01 (2 min), 07-02 (3 min), 08-01 (4 min), 08-02 (5 min)
+- Last 5 plans: 07-01 (2 min), 07-02 (3 min), 08-01 (4 min), 08-02 (5 min), 09-01 (4 min)
 - Trend: Consistent 2-5 minute execution times
 
 *Updated after each plan completion*
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [D08-02-01] Use jsdom for DOM testing instead of live page testing
 - [D08-02-02] Group fixtures by selector source (4 files for 11 retailers)
 - [D08-02-03] Test file uses .test.ts extension to match vitest pattern
+- [D09-01-01] Use ?? 0 for null bidPrice/shippingFee (defensive default)
+- [D09-01-02] Always output CSV regardless of input format (XLSX -> CSV)
+- [D09-01-03] Metadata values on first data row only, empty strings for subsequent rows
 
 ### Pending Todos
 
@@ -109,7 +113,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 08-02-PLAN.md (E2E Selector Tests) - Phase 8 complete
+Stopped at: Completed 09-01-PLAN.md (Raw Metadata Append)
 Resume file: None
 
 ## Roadmap Evolution
@@ -126,4 +130,4 @@ Resume file: None
 - [x] Phase 6: UI Integration (1/1 plans)
 - [x] Phase 7: File Naming Optimization (2/2 plans)
 - [x] Phase 8: Metadata DOM Audit (2/2 plans)
-- [ ] Phase 9: Raw Manifest Enhancement (not planned)
+- [ ] Phase 9: Raw Manifest Enhancement (1/2 plans)
