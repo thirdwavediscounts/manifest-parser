@@ -51,6 +51,24 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 - [ ] **AMZD-05**: Find ASIN by scanning row for B0XXXXXXXXX pattern
 - [ ] **AMZD-06**: Merge split Item Title columns (everything between ASIN and Seller Name)
 
+### File Naming
+
+- [x] **NAME-01**: Filenames stay within ~50 character limit (retailer 3 + condition 3 + time 4 + title remaining)
+- [x] **NAME-02**: No mid-word truncation in titles (smart word boundary detection)
+- [x] **NAME-03**: Common words abbreviated while maintaining readability (Accessories → Acc, Electronics → Elec)
+- [x] **NAME-04**: Multi-category titles optimized (e.g., "PC Gaming Accessories & Tablet Accessories" → "PC Gaming & Tablet Acc")
+
+### Metadata DOM
+
+- [ ] **META-04**: Each retailer has documented and verified DOM selectors for bid price extraction
+- [ ] **META-05**: Each retailer has documented and verified DOM selectors for shipping fee extraction
+
+### Raw File Enhancement
+
+- [ ] **RAW-01**: Raw CSV/XLSX downloads include auction_url, bid_price, shipping_fee as appended columns
+- [ ] **RAW-02**: Metadata values appear only on first data row (subsequent rows empty for these columns)
+- [ ] **RAW-03**: Works for both tab-processed manifests and direct URL downloads
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -110,12 +128,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AMZD-04 | Phase 3 | Pending |
 | AMZD-05 | Phase 3 | Pending |
 | AMZD-06 | Phase 3 | Pending |
+| NAME-01 | Phase 7 | Complete |
+| NAME-02 | Phase 7 | Complete |
+| NAME-03 | Phase 7 | Complete |
+| NAME-04 | Phase 7 | Complete |
+| META-04 | Phase 8 | Pending |
+| META-05 | Phase 8 | Pending |
+| RAW-01 | Phase 9 | Pending |
+| RAW-02 | Phase 9 | Pending |
+| RAW-03 | Phase 9 | Pending |
 
 **Coverage:**
-- v1 requirements: 29 total
-- Mapped to phases: 29
+- v1 requirements: 38 total
+- Mapped to phases: 38
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-27*
-*Last updated: 2026-01-27 after roadmap creation*
+*Last updated: 2026-01-28 after adding phases 7, 8, 9*

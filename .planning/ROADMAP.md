@@ -16,7 +16,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - [x] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
 - [x] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
 - [x] **Phase 6: UI Integration** - User toggle between raw and unified format
-- [ ] **Phase 7: File Naming Optimization** - Smart title truncation with word-aware abbreviation
+- [x] **Phase 7: File Naming Optimization** - Smart title truncation with word-aware abbreviation
 - [ ] **Phase 8: Metadata DOM Audit** - Clear and document bid/shipping selectors per retailer
 - [ ] **Phase 9: Raw Manifest Enhancement** - Append auction metadata columns to raw file downloads
 
@@ -126,8 +126,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — TDD: Filename utility functions (abbreviation, word-boundary truncation)
-- [ ] 07-02-PLAN.md — Integrate with popup.ts generateListingFilename
+- [x] 07-01-PLAN.md — TDD: Filename utility functions (abbreviation, word-boundary truncation)
+- [x] 07-02-PLAN.md — Integrate with popup.ts generateListingFilename
 
 ### Phase 8: Metadata DOM Audit
 **Goal**: Document and validate bid price and shipping fee DOM selectors for each retailer
@@ -170,7 +170,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 4. Data Processing Pipeline | 2/2 | Complete | 2026-01-27 |
 | 5. Auction Metadata Extraction | 2/2 | Complete | 2026-01-27 |
 | 6. UI Integration | 1/1 | Complete | 2026-01-27 |
-| 7. File Naming Optimization | 0/2 | Planned | - |
+| 7. File Naming Optimization | 2/2 | Complete | 2026-01-28 |
 | 8. Metadata DOM Audit | 0/? | Pending | - |
 | 9. Raw Manifest Enhancement | 0/? | Pending | - |
 
