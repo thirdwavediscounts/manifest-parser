@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "vitest run tests/e2e --testTimeout=30000"
   },
   "dependencies": {
     "jszip": "^3.10.1",
@@ -18,8 +19,10 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.23",
     "@types/chrome": "^0.0.260",
+    "@types/jsdom": "^27.0.0",
     "@types/papaparse": "^5.3.14",
     "csv-parse": "^6.1.0",
+    "jsdom": "^27.4.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.12",
     "vitest": "^1.2.2"
