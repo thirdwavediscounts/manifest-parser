@@ -618,6 +618,9 @@ async function handleProcess(): Promise<void> {
                 retailer,
                 sourceUrl: urlItem.url,
                 fileType: result.manifestType,
+                auctionUrl: urlItem.url,
+                bidPrice: result.bidPrice ?? 0,
+                shippingFee: result.shippingFee ?? 0,
               })
 
               // Still parse for totals display (but don't transform)
@@ -690,6 +693,9 @@ async function handleProcess(): Promise<void> {
                 retailer,
                 sourceUrl: urlItem.url,
                 fileType: rawData.type,
+                auctionUrl: urlItem.url,
+                bidPrice: 0,
+                shippingFee: 0,
               })
 
               // Still parse for totals display
@@ -765,6 +771,9 @@ async function handleProcess(): Promise<void> {
             retailer: 'manual',
             sourceUrl: 'local-upload',
             fileType: getFileType(file.name),
+            auctionUrl: 'local-upload',
+            bidPrice: 0,
+            shippingFee: 0,
           })
 
           // Still parse for totals display
