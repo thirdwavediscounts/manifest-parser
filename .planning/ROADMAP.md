@@ -17,7 +17,7 @@ Transform the existing Chrome extension from raw manifest downloads to producing
 - [x] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
 - [x] **Phase 6: UI Integration** - User toggle between raw and unified format
 - [x] **Phase 7: File Naming Optimization** - Smart title truncation with word-aware abbreviation
-- [ ] **Phase 8: Metadata DOM Audit** - Clear and document bid/shipping selectors per retailer
+- [x] **Phase 8: Metadata DOM Audit** - Clear and document bid/shipping selectors per retailer
 - [ ] **Phase 9: Raw Manifest Enhancement** - Append auction metadata columns to raw file downloads
 
 ## Phase Details
@@ -141,8 +141,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Create SELECTORS.md documentation and add inline code comments
-- [ ] 08-02-PLAN.md — Create E2E test infrastructure for selector validation
+- [x] 08-01-PLAN.md — Create SELECTORS.md documentation and add inline code comments
+- [x] 08-02-PLAN.md — Create E2E test infrastructure for selector validation
 
 ### Phase 9: Raw Manifest Enhancement
 **Goal**: Append auction metadata columns to raw manifest downloads
@@ -172,7 +172,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 5. Auction Metadata Extraction | 2/2 | Complete | 2026-01-27 |
 | 6. UI Integration | 1/1 | Complete | 2026-01-27 |
 | 7. File Naming Optimization | 2/2 | Complete | 2026-01-28 |
-| 8. Metadata DOM Audit | 0/2 | Planned | - |
+| 8. Metadata DOM Audit | 2/2 | Complete | 2026-01-28 |
 | 9. Raw Manifest Enhancement | 0/? | Pending | - |
 
 ---

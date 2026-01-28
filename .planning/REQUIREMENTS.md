@@ -60,8 +60,8 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 ### Metadata DOM
 
-- [ ] **META-04**: Each retailer has documented and verified DOM selectors for bid price extraction
-- [ ] **META-05**: Each retailer has documented and verified DOM selectors for shipping fee extraction
+- [x] **META-04**: Each retailer has documented and verified DOM selectors for bid price extraction
+- [x] **META-05**: Each retailer has documented and verified DOM selectors for shipping fee extraction
 
 ### Raw File Enhancement
 
@@ -132,8 +132,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NAME-02 | Phase 7 | Complete |
 | NAME-03 | Phase 7 | Complete |
 | NAME-04 | Phase 7 | Complete |
-| META-04 | Phase 8 | Pending |
-| META-05 | Phase 8 | Pending |
+| META-04 | Phase 8 | Complete |
+| META-05 | Phase 8 | Complete |
 | RAW-01 | Phase 9 | Pending |
 | RAW-02 | Phase 9 | Pending |
 | RAW-03 | Phase 9 | Pending |
