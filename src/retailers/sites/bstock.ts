@@ -86,18 +86,66 @@ export const bstockRetailer: RetailerModule = {
     }
 
     /**
+     * Detect if page is B-Stock Classic (auction pages) vs Next.js (marketplace)
+     * Classic: /jcpenney/auction/auction/view/id/, /qvc/auction/, etc.
+     * Next.js: /buy/listings/details/
+     */
+    function isClassicAuctionPage(): boolean {
+      return url.includes('/auction/auction/view/id/') ||
+             (url.includes('/auction/') && !url.includes('/buy/listings/'))
+    }
+
+    /**
+     * Extract bid price from B-Stock Classic pages
+     * Uses .auction-data-label with "Current bid" or "Opening bid" text
+     */
+    function extractBidPriceClassic(): number | null {
+      // Look for labels with "Current bid" or "Opening bid"
+      const labels = document.querySelectorAll('.auction-data-label')
+      for (const label of labels) {
+        const labelText = (label.textContent || '').toLowerCase().trim()
+        if (labelText.includes('current bid') || labelText.includes('opening bid')) {
+          // Value is in sibling div or parent's next element
+          const parent = label.parentElement
+          if (parent) {
+            // Try sibling div with price value
+            const valueDiv = parent.querySelector('.auction-data-content, div:not(.auction-data-label)')
+            if (valueDiv) {
+              const parsed = parsePrice(valueDiv.textContent)
+              if (parsed !== null) return parsed
+            }
+          }
+          // Also try next sibling element
+          const nextEl = label.nextElementSibling
+          if (nextEl) {
+            const parsed = parsePrice(nextEl.textContent)
+            if (parsed !== null) return parsed
+          }
+        }
+      }
+
+      // Fallback: Try #current_bid_amount selector (JCPenney specific)
+      const bidEl = document.querySelector('#current_bid_amount')
+      if (bidEl?.textContent) {
+        const parsed = parsePrice(bidEl.textContent)
+        if (parsed !== null) return parsed
+      }
+
+      return null
+    }
+
+    /**
      * Extract bid price from __NEXT_DATA__ or DOM
      *
-     * Bid price selectors tried in order:
-     * 1. __NEXT_DATA__ JSON fields (primary - most reliable for Next.js pages):
-     *    - currentBid, winningBid, highBid, currentPrice, bidAmount
-     *    - Also checks nested lot.* fields
-     * 2. DOM fallback selectors (if __NEXT_DATA__ unavailable):
-     *    - [data-testid*="bid"], [data-testid*="price"]
-     *    - [class*="bid-amount"], [class*="current-bid"], [class*="winning-bid"]
-     *    - [class*="CurrentBid"], [class*="bidPrice"]
+     * For Next.js sites: Bid is in header area with digits in individual spans
+     * For Classic sites: Uses .auction-data-label approach
      */
     function extractBidPrice(nextData: Record<string, unknown> | null): number | null {
+      // For Classic auction pages, use specific selectors
+      if (isClassicAuctionPage()) {
+        return extractBidPriceClassic()
+      }
+
       // Try __NEXT_DATA__ fields first - most reliable source on B-Stock marketplace
       if (nextData) {
         const data = nextData as Record<string, unknown>
@@ -127,22 +175,51 @@ export const bstockRetailer: RetailerModule = {
         }
       }
 
-      // DOM fallback selectors - used when __NEXT_DATA__ is unavailable
-      // These target common B-Stock marketplace bid display elements
-      const bidSelectors = [
-        '[data-testid*="bid"]', // Test IDs for automation (most stable)
-        '[data-testid*="price"]', // Alternative price test ID
-        '[class*="bid-amount"]', // B-Stock bid display element
-        '[class*="current-bid"]', // Current bid label container
-        '[class*="winning-bid"]', // Winning bid indicator
-        '[class*="CurrentBid"]', // PascalCase variant
-        '[class*="bidPrice"]', // CamelCase variant
-      ]
-      for (const selector of bidSelectors) {
-        const el = document.querySelector(selector)
-        if (el?.textContent?.trim()) {
-          const parsed = parsePrice(el.textContent.trim())
-          if (parsed !== null) return parsed
+      // DOM fallback for Next.js sites - look for "Current Bid" or "Buy Now" label
+      // Then find associated price (digits may be in individual spans)
+      const bodyText = document.body.innerText
+      const bidMatch = bodyText.match(/(?:Current\s*Bid|Buy\s*Now)[:\s]*\$?([\d,]+(?:\.\d{2})?)/i)
+      if (bidMatch) {
+        const parsed = parsePrice(bidMatch[1])
+        if (parsed !== null) return parsed
+      }
+
+      return null
+    }
+
+    /**
+     * Extract shipping fee from B-Stock Classic pages
+     * Uses .auction-data-label with "Shipping Cost" text
+     */
+    function extractShippingFeeClassic(): number | null {
+      const labels = document.querySelectorAll('.auction-data-label')
+      for (const label of labels) {
+        const labelText = (label.textContent || '').toLowerCase().trim()
+        const parent = label.parentElement
+
+        if (labelText.includes('shipping cost')) {
+          // Value is in sibling div
+          if (parent) {
+            const valueDiv = parent.querySelector('.auction-data-content, div:not(.auction-data-label)')
+            if (valueDiv) {
+              const text = valueDiv.textContent || ''
+              if (text.toLowerCase().includes('free')) {
+                return 0
+              }
+              const parsed = parsePrice(text)
+              if (parsed !== null) return parsed
+            }
+          }
+          // Also try next sibling
+          const nextEl = label.nextElementSibling
+          if (nextEl) {
+            const text = nextEl.textContent || ''
+            if (text.toLowerCase().includes('free')) {
+              return 0
+            }
+            const parsed = parsePrice(text)
+            if (parsed !== null) return parsed
+          }
         }
       }
 
@@ -150,23 +227,15 @@ export const bstockRetailer: RetailerModule = {
     }
 
     /**
-     * Extract shipping fee from __NEXT_DATA__ or DOM
-     *
-     * Shipping selectors tried in order:
-     * 1. __NEXT_DATA__ JSON fields (primary - most reliable for Next.js pages):
-     *    - shippingCost, estimatedShipping, freightCost, shipping, deliveryCost
-     *    - Also checks nested lot.* fields
-     *    - "free" in text returns 0 (distinguishes from not-found which returns null)
-     * 2. DOM fallback selectors (if __NEXT_DATA__ unavailable):
-     *    - [class*="shipping"], [class*="Shipping"]
-     *    - [class*="freight"], [class*="Freight"]
-     *    - [data-testid*="shipping"]
+     * Extract shipping fee from Next.js pages
+     * For Next.js: Look for "Shipping" label in page text or __NEXT_DATA__
      */
-    function extractShippingFee(nextData: Record<string, unknown> | null): number | null {
-      // Try __NEXT_DATA__ fields first - most reliable source on B-Stock marketplace
+    function extractShippingFeeNextJs(nextData: Record<string, unknown> | null): number | null {
+      // Try __NEXT_DATA__ fields first
       if (nextData) {
         const data = nextData as Record<string, unknown>
-        // Look for common shipping fields in the listing data structure
+
+        // Look for shipping fields
         const shippingFields = ['shippingCost', 'estimatedShipping', 'freightCost', 'shipping', 'deliveryCost']
         for (const field of shippingFields) {
           if (typeof data[field] === 'number') {
@@ -174,13 +243,15 @@ export const bstockRetailer: RetailerModule = {
           }
           if (typeof data[field] === 'string') {
             const text = (data[field] as string).toLowerCase()
-            // Check for free shipping
-            if (text.includes('free')) return 0
+            if (text.includes('free')) {
+              return 0
+            }
             const parsed = parsePrice(data[field] as string)
             if (parsed !== null) return parsed
           }
         }
-        // Check nested lot or shipping object
+
+        // Check nested lot object
         const lot = data.lot as Record<string, unknown> | undefined
         if (lot) {
           for (const field of shippingFields) {
@@ -189,7 +260,9 @@ export const bstockRetailer: RetailerModule = {
             }
             if (typeof lot[field] === 'string') {
               const text = (lot[field] as string).toLowerCase()
-              if (text.includes('free')) return 0
+              if (text.includes('free')) {
+                return 0
+              }
               const parsed = parsePrice(lot[field] as string)
               if (parsed !== null) return parsed
             }
@@ -197,27 +270,33 @@ export const bstockRetailer: RetailerModule = {
         }
       }
 
-      // DOM fallback selectors - used when __NEXT_DATA__ is unavailable
-      // These target common B-Stock marketplace shipping display elements
-      const shippingSelectors = [
-        '[class*="shipping"]', // Lowercase shipping class
-        '[class*="Shipping"]', // PascalCase shipping class
-        '[class*="freight"]', // Lowercase freight class (B-Stock term)
-        '[class*="Freight"]', // PascalCase freight class
-        '[data-testid*="shipping"]', // Test ID for automation
-      ]
-      for (const selector of shippingSelectors) {
-        const el = document.querySelector(selector)
-        if (el?.textContent?.trim()) {
-          const text = el.textContent.trim().toLowerCase()
-          // Check for free shipping
-          if (text.includes('free')) return 0
-          const parsed = parsePrice(el.textContent.trim())
-          if (parsed !== null) return parsed
-        }
+      // DOM fallback: Look for "Shipping" label in page text
+      const bodyText = document.body.innerText
+
+      // Look for "Shipping: $X,XXX.XX" or "Shipping $X,XXX.XX"
+      const shipMatch = bodyText.match(/(?:^|\s)Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/im)
+      if (shipMatch) {
+        const parsed = parsePrice(shipMatch[1])
+        if (parsed !== null) return parsed
+      }
+
+      // Check for free shipping
+      if (/free\s*shipping/i.test(bodyText)) {
+        return 0
       }
 
       return null
+    }
+
+    /**
+     * Extract shipping fee from __NEXT_DATA__ or DOM
+     * Delegates to Classic or Next.js specific extraction based on page type
+     */
+    function extractShippingFee(nextData: Record<string, unknown> | null): number | null {
+      if (isClassicAuctionPage()) {
+        return extractShippingFeeClassic()
+      }
+      return extractShippingFeeNextJs(nextData)
     }
 
     // Try __NEXT_DATA__ first (B-Stock marketplace pages)

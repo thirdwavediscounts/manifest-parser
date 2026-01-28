@@ -74,44 +74,45 @@ export const techLiquidatorsRetailer: RetailerModule = {
 
     /**
      * Extract bid price from DOM
-     * Look for "Current Bid", "High Bid" labels on detail pages
+     * TechLiquidators uses .lot-pricing-box for pricing display
      *
-     * Bid price selectors tried in order:
-     * 1. CSS class/ID selectors targeting common bid display elements:
-     *    - [class*="bid-amount"], [class*="current-bid"], [class*="high-bid"]
-     *    - [class*="bidPrice"], [id*="currentBid"], [id*="bidAmount"]
-     * 2. Fallback regex patterns in page body text:
-     *    - /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
-     *    - /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
-     *    - /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
-     *    - /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     * DOM structure reference (from retailer-selectors-data.json):
+     * - .lot-pricing-box: Main pricing container
+     * - .lot-pricing-box-item: Individual price rows
+     * - .col-xs-3: Price values in left column
+     * - .lot-total-price-value: Est. Total value
      */
     function extractBidPrice(): number | null {
-      // Try CSS class/ID selectors first - target TechLiquidators bid elements
-      const bidSelectors = [
-        '[class*="bid-amount"]', // Bid amount display
-        '[class*="current-bid"]', // Current bid container
-        '[class*="high-bid"]', // High bid indicator
-        '[class*="bidPrice"]', // CamelCase bid price
-        '[id*="currentBid"]', // ID-based current bid
-        '[id*="bidAmount"]', // ID-based bid amount
-      ]
-
-      for (const selector of bidSelectors) {
-        const el = document.querySelector(selector)
-        if (el?.textContent) {
-          const parsed = parsePrice(el.textContent)
+      // Primary: Try .lot-pricing-box structure (TechLiquidators specific)
+      const pricingBox = document.querySelector('.lot-pricing-box')
+      if (pricingBox) {
+        // Look for price items - usually the first .col-xs-3 contains current bid
+        const priceItems = pricingBox.querySelectorAll('.lot-pricing-box-item')
+        for (const item of priceItems) {
+          const text = (item.textContent || '').toLowerCase()
+          // Look for "current bid" or "bid" row
+          if (text.includes('current bid') || text.includes('high bid') || text.includes('bid')) {
+            const priceEl = item.querySelector('.col-xs-3')
+            if (priceEl?.textContent) {
+              const parsed = parsePrice(priceEl.textContent)
+              if (parsed !== null) return parsed
+            }
+          }
+        }
+        // Fallback: just get first price value from the box
+        const firstPrice = pricingBox.querySelector('.col-xs-3')
+        if (firstPrice?.textContent) {
+          const parsed = parsePrice(firstPrice.textContent)
           if (parsed !== null) return parsed
         }
       }
 
       // Fallback: Search page text for "Current Bid: $X,XXX" pattern
-      // This catches bid amounts even if CSS selectors fail due to layout changes
       const bidPatterns = [
-        /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Current Bid: $850"
-        /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "High Bid: $850"
-        /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Winning Bid: $850"
-        /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Bid Price: $850"
+        /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
       ]
 
       for (const pattern of bidPatterns) {
@@ -127,49 +128,59 @@ export const techLiquidatorsRetailer: RetailerModule = {
 
     /**
      * Extract shipping fee from DOM
-     * Look for "Shipping:", "Freight:", "Estimated Shipping:" in listing details
+     * TechLiquidators often has "Shipping Included" or shipping in .lot-pricing-box
      *
-     * Shipping selectors tried in order:
-     * 1. CSS class/ID selectors targeting common shipping display elements:
-     *    - [class*="shipping"], [class*="freight"]
-     *    - [id*="shipping"], [id*="freight"]
-     * 2. Free shipping check: returns 0 if "free" found in text (not null)
-     * 3. Fallback regex patterns in page body text:
-     *    - /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
-     *    - /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
-     *    - /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     * DOM structure reference (from retailer-selectors-data.json):
+     * - .lot-pricing-box: Main pricing container
+     * - .lot-pricing-box-item: Individual price rows (includes shipping)
+     * - Shipping type: May show "Shipping Included"
      */
     function extractShippingFee(): number | null {
-      // Try CSS class/ID selectors first - target TechLiquidators shipping elements
-      const shippingSelectors = [
-        '[class*="shipping"]', // Shipping cost container
-        '[class*="freight"]', // Freight cost element
-        '[id*="shipping"]', // ID-based shipping
-        '[id*="freight"]', // ID-based freight
-      ]
-
-      for (const selector of shippingSelectors) {
-        const el = document.querySelector(selector)
-        if (el?.textContent) {
-          const text = el.textContent.toLowerCase()
-          // Free shipping check: returns 0 (distinguishes from not-found which returns null)
-          if (text.includes('free')) return 0
-          const parsed = parsePrice(el.textContent)
-          if (parsed !== null) return parsed
+      // Check for "Shipping Included" indicator (common on TechLiquidators)
+      if (/shipping\s*included/i.test(bodyText)) {
+        // Shipping included in total - look for the shipping row value
+        const pricingBox = document.querySelector('.lot-pricing-box')
+        if (pricingBox) {
+          const priceItems = pricingBox.querySelectorAll('.lot-pricing-box-item')
+          for (const item of priceItems) {
+            const text = (item.textContent || '').toLowerCase()
+            if (text.includes('shipping')) {
+              const priceEl = item.querySelector('.col-xs-3')
+              if (priceEl?.textContent) {
+                const parsed = parsePrice(priceEl.textContent)
+                if (parsed !== null) return parsed
+              }
+            }
+          }
         }
       }
 
-      // Fallback: Search page text for shipping patterns
-      // Free shipping check first (return 0, not null)
+      // Free shipping check
       if (/shipping[:\s]*free/i.test(bodyText) || /free\s*shipping/i.test(bodyText)) {
         return 0
       }
 
-      // Shipping amount patterns
+      // Look in .lot-pricing-box for shipping row
+      const pricingBox = document.querySelector('.lot-pricing-box')
+      if (pricingBox) {
+        const priceItems = pricingBox.querySelectorAll('.lot-pricing-box-item')
+        for (const item of priceItems) {
+          const text = (item.textContent || '').toLowerCase()
+          if (text.includes('shipping') || text.includes('freight')) {
+            const priceEl = item.querySelector('.col-xs-3')
+            if (priceEl?.textContent) {
+              const parsed = parsePrice(priceEl.textContent)
+              if (parsed !== null) return parsed
+            }
+          }
+        }
+      }
+
+      // Fallback: Search page text for shipping patterns
       const shippingPatterns = [
-        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Shipping: $125"
-        /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Freight: $125"
-        /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Estimated Shipping: $125"
+        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
       ]
 
       for (const pattern of shippingPatterns) {
