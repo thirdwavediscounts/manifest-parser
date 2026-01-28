@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** Milestone Complete - All phases verified
+**Current focus:** Phase 7 - File Naming Optimization
 
 ## Current Position
 
-Phase: 6 of 6 (UI Integration)
-Plan: 1 of 1 in phase
-Status: Phase complete
-Last activity: 2026-01-27 - Completed 06-01-PLAN.md (Format Toggle UI)
+Phase: 7 of 9 (File Naming Optimization)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-28 - Completed 07-01-PLAN.md (Filename Utility Functions)
 
-Progress: [############] 100% (11/11 plans)
+Progress: [###########.] 92% (12/13 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 3.6 minutes
-- Total execution time: 41 minutes
+- Total plans completed: 12
+- Average duration: 3.4 minutes
+- Total execution time: 43 minutes
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: [############] 100% (11/11 plans)
 | 4. Data Processing Pipeline | 2/2 | 7 min | 3.5 min |
 | 5. Auction Metadata Extraction | 2/2 | 6 min | 3.0 min |
 | 6. UI Integration | 1/1 | 4 min | 4.0 min |
+| 7. File Naming Optimization | 1/2 | 2 min | 2.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (3 min), 04-02 (4 min), 05-01 (3 min), 05-02 (3 min), 06-01 (4 min)
-- Trend: Consistent 3-4 minute execution times
+- Last 5 plans: 04-02 (4 min), 05-01 (3 min), 05-02 (3 min), 06-01 (4 min), 07-01 (2 min)
+- Trend: Consistent 2-4 minute execution times
 
 *Updated after each plan completion*
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [D06-01-01] Default to Raw mode for backward compatibility
 - [D06-01-02] Unified mode throws on parse error (no fallback)
 - [D06-01-03] Both modes track totals for results display
+- [D07-01-01] Case-insensitive matching for abbreviations with preserved output case
+- [D07-01-02] Dash as word separator for filename-safe truncation
+- [D07-01-03] Pipeline order: deduplicate -> abbreviate -> convert spaces -> truncate
 
 ### Pending Todos
 
@@ -95,9 +99,13 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-27
-Stopped at: Completed 06-01-PLAN.md (Format Toggle UI)
+Last session: 2026-01-28
+Stopped at: Completed 07-01-PLAN.md (Filename Utility Functions)
 Resume file: None
+
+## Roadmap Evolution
+
+- Phases 7, 8, 9 added: File naming optimization, metadata DOM audit, raw manifest enhancement (2026-01-28)
 
 ## Phase Completion Status
 
@@ -107,3 +115,6 @@ Resume file: None
 - [x] Phase 4: Data Processing Pipeline (2/2 plans)
 - [x] Phase 5: Auction Metadata Extraction (2/2 plans)
 - [x] Phase 6: UI Integration (1/1 plans)
+- [ ] Phase 7: File Naming Optimization (1/2 plans)
+- [ ] Phase 8: Metadata DOM Audit (not planned)
+- [ ] Phase 9: Raw Manifest Enhancement (not planned)
