@@ -5,6 +5,7 @@ import {
   detectRetailerFromUrl,
   needsTabProcessing,
 } from '../retailers'
+import { smartTruncateTitle } from '../utils/filename-utils'
 import {
   extractSpreadsheetId,
   fetchUrlsFromSheet,
@@ -1324,11 +1325,8 @@ function generateListingFilename(
   // Truncate the product name part, preserving the suffix
   const maxProductLen = maxListingLen - suffix.length
   let productPart = parts.join('-')
-  if (productPart.length > maxProductLen) {
-    productPart = productPart.substring(0, maxProductLen)
-    // Clean up trailing dash if truncation left one
-    productPart = productPart.replace(/-$/, '')
-  }
+  // Use smart truncation for word-boundary-aware truncation with abbreviations
+  productPart = smartTruncateTitle(productPart, maxProductLen)
 
   sanitizedListing = productPart + suffix
 
