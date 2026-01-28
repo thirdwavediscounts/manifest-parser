@@ -21,7 +21,7 @@
  * - Amazon Direct: AMZD (amazon.ts) - fixed-price, bidPrice always null
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 import { JSDOM } from 'jsdom'
@@ -472,15 +472,7 @@ function extractShippingFeeAMZD(doc: Document): { value: number | null; selector
 // =============================================================================
 
 describe('Metadata Selector Validation', () => {
-  // Check if jsdom is available
-  let hasJsdom = false
-  beforeAll(() => {
-    try {
-      hasJsdom = typeof JSDOM !== 'undefined'
-    } catch {
-      hasJsdom = false
-    }
-  })
+  // Note: JSDOM availability is verified via direct usage in tests
 
   describe('B-Stock Auction Pages', () => {
     // ACE, BY, JCP, QVC all use the same selectors (bstock-auction.ts)
