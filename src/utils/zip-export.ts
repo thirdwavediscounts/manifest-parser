@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import type { ManifestItem } from '../parsers/types'
 import { generateCsvContent } from './csv-export'
+import { appendMetadataToManifest } from './raw-metadata'
 
 /**
  * Unified format entry for ZIP (already-transformed CSV content)
@@ -28,6 +29,10 @@ export interface RawZipEntry {
   retailer: string
   sourceUrl: string
   fileType: 'csv' | 'xlsx' | 'xls'
+  // Metadata fields for raw file enhancement
+  auctionUrl: string
+  bidPrice: number
+  shippingFee: number
 }
 
 /**
@@ -67,33 +72,36 @@ export async function createZipFromManifests(entries: ZipEntry[]): Promise<Blob>
 }
 
 /**
- * Create a ZIP file containing raw (unparsed) manifest files
- * This preserves original file format without conversion
+ * Create a ZIP file containing raw manifest files with appended metadata columns
+ * All files are converted to CSV format with auction_url, bid_price, shipping_fee columns
  */
 export async function createZipFromRawFiles(entries: RawZipEntry[]): Promise<Blob> {
   const zip = new JSZip()
   const usedFilenames = new Set<string>()
 
   for (const entry of entries) {
-    // Decode base64 to binary
-    const binaryData = atob(entry.data)
-    const bytes = new Uint8Array(binaryData.length)
-    for (let i = 0; i < binaryData.length; i++) {
-      bytes[i] = binaryData.charCodeAt(i)
-    }
+    // Append metadata columns and convert to CSV
+    const csvContent = appendMetadataToManifest(entry.data, entry.fileType, {
+      auctionUrl: entry.auctionUrl,
+      bidPrice: entry.bidPrice,
+      shippingFee: entry.shippingFee,
+    })
 
-    // Generate unique filename with correct extension
-    let filename = sanitizeRawFilename(entry.filename, entry.retailer, entry.fileType)
+    // Convert CSV string to Uint8Array
+    const encoder = new TextEncoder()
+    const bytes = encoder.encode(csvContent)
+
+    // Generate unique filename (always .csv)
+    let filename = sanitizeRawFilename(entry.filename, entry.retailer)
 
     // Ensure unique filename
     if (usedFilenames.has(filename)) {
-      const ext = entry.fileType
-      const base = filename.replace(new RegExp(`\\.${ext}$`, 'i'), '')
+      const base = filename.replace(/\.csv$/i, '')
       let counter = 2
-      while (usedFilenames.has(`${base}_${counter}.${ext}`)) {
+      while (usedFilenames.has(`${base}_${counter}.csv`)) {
         counter++
       }
-      filename = `${base}_${counter}.${ext}`
+      filename = `${base}_${counter}.csv`
     }
 
     usedFilenames.add(filename)
@@ -144,13 +152,10 @@ export async function createZipFromUnifiedManifests(entries: UnifiedZipEntry[]):
 }
 
 /**
- * Sanitize filename for raw files, preserving original extension
+ * Sanitize filename for raw files, always using .csv extension
+ * (All raw files are converted to CSV with metadata columns)
  */
-function sanitizeRawFilename(
-  filename: string,
-  retailer: string,
-  fileType: 'csv' | 'xlsx' | 'xls'
-): string {
+function sanitizeRawFilename(filename: string, retailer: string): string {
   // Remove/replace invalid characters
   let safe = filename
     .replace(/[<>:"/\\|?*]/g, '_')
@@ -158,10 +163,9 @@ function sanitizeRawFilename(
     .replace(/_+/g, '_')
     .trim()
 
-  // Ensure it ends with correct extension
-  const ext = `.${fileType}`
-  if (!safe.toLowerCase().endsWith(ext)) {
-    safe = safe.replace(/\.[^.]+$/, '') + ext
+  // Always use .csv extension (files are converted to CSV)
+  if (!safe.toLowerCase().endsWith('.csv')) {
+    safe = safe.replace(/\.[^.]+$/, '') + '.csv'
   }
 
   // Prefix with retailer if not already included
@@ -172,7 +176,7 @@ function sanitizeRawFilename(
 
   // Truncate if too long
   if (safe.length > 100) {
-    safe = safe.substring(0, 90) + ext
+    safe = safe.substring(0, 90) + '.csv'
   }
 
   return safe
