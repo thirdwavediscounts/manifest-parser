@@ -87,12 +87,21 @@ export const bstockRetailer: RetailerModule = {
 
     /**
      * Extract bid price from __NEXT_DATA__ or DOM
+     *
+     * Bid price selectors tried in order:
+     * 1. __NEXT_DATA__ JSON fields (primary - most reliable for Next.js pages):
+     *    - currentBid, winningBid, highBid, currentPrice, bidAmount
+     *    - Also checks nested lot.* fields
+     * 2. DOM fallback selectors (if __NEXT_DATA__ unavailable):
+     *    - [data-testid*="bid"], [data-testid*="price"]
+     *    - [class*="bid-amount"], [class*="current-bid"], [class*="winning-bid"]
+     *    - [class*="CurrentBid"], [class*="bidPrice"]
      */
     function extractBidPrice(nextData: Record<string, unknown> | null): number | null {
-      // Try __NEXT_DATA__ fields first
+      // Try __NEXT_DATA__ fields first - most reliable source on B-Stock marketplace
       if (nextData) {
         const data = nextData as Record<string, unknown>
-        // Look for common bid price fields
+        // Look for common bid price fields in the listing data structure
         const bidFields = ['currentBid', 'winningBid', 'highBid', 'currentPrice', 'bidAmount']
         for (const field of bidFields) {
           if (typeof data[field] === 'number') {
@@ -118,15 +127,16 @@ export const bstockRetailer: RetailerModule = {
         }
       }
 
-      // DOM fallback selectors
+      // DOM fallback selectors - used when __NEXT_DATA__ is unavailable
+      // These target common B-Stock marketplace bid display elements
       const bidSelectors = [
-        '[data-testid*="bid"]',
-        '[data-testid*="price"]',
-        '[class*="bid-amount"]',
-        '[class*="current-bid"]',
-        '[class*="winning-bid"]',
-        '[class*="CurrentBid"]',
-        '[class*="bidPrice"]',
+        '[data-testid*="bid"]', // Test IDs for automation (most stable)
+        '[data-testid*="price"]', // Alternative price test ID
+        '[class*="bid-amount"]', // B-Stock bid display element
+        '[class*="current-bid"]', // Current bid label container
+        '[class*="winning-bid"]', // Winning bid indicator
+        '[class*="CurrentBid"]', // PascalCase variant
+        '[class*="bidPrice"]', // CamelCase variant
       ]
       for (const selector of bidSelectors) {
         const el = document.querySelector(selector)
@@ -141,12 +151,22 @@ export const bstockRetailer: RetailerModule = {
 
     /**
      * Extract shipping fee from __NEXT_DATA__ or DOM
+     *
+     * Shipping selectors tried in order:
+     * 1. __NEXT_DATA__ JSON fields (primary - most reliable for Next.js pages):
+     *    - shippingCost, estimatedShipping, freightCost, shipping, deliveryCost
+     *    - Also checks nested lot.* fields
+     *    - "free" in text returns 0 (distinguishes from not-found which returns null)
+     * 2. DOM fallback selectors (if __NEXT_DATA__ unavailable):
+     *    - [class*="shipping"], [class*="Shipping"]
+     *    - [class*="freight"], [class*="Freight"]
+     *    - [data-testid*="shipping"]
      */
     function extractShippingFee(nextData: Record<string, unknown> | null): number | null {
-      // Try __NEXT_DATA__ fields first
+      // Try __NEXT_DATA__ fields first - most reliable source on B-Stock marketplace
       if (nextData) {
         const data = nextData as Record<string, unknown>
-        // Look for common shipping fields
+        // Look for common shipping fields in the listing data structure
         const shippingFields = ['shippingCost', 'estimatedShipping', 'freightCost', 'shipping', 'deliveryCost']
         for (const field of shippingFields) {
           if (typeof data[field] === 'number') {
@@ -177,13 +197,14 @@ export const bstockRetailer: RetailerModule = {
         }
       }
 
-      // DOM fallback selectors
+      // DOM fallback selectors - used when __NEXT_DATA__ is unavailable
+      // These target common B-Stock marketplace shipping display elements
       const shippingSelectors = [
-        '[class*="shipping"]',
-        '[class*="Shipping"]',
-        '[class*="freight"]',
-        '[class*="Freight"]',
-        '[data-testid*="shipping"]',
+        '[class*="shipping"]', // Lowercase shipping class
+        '[class*="Shipping"]', // PascalCase shipping class
+        '[class*="freight"]', // Lowercase freight class (B-Stock term)
+        '[class*="Freight"]', // PascalCase freight class
+        '[data-testid*="shipping"]', // Test ID for automation
       ]
       for (const selector of shippingSelectors) {
         const el = document.querySelector(selector)

@@ -75,16 +75,26 @@ export const techLiquidatorsRetailer: RetailerModule = {
     /**
      * Extract bid price from DOM
      * Look for "Current Bid", "High Bid" labels on detail pages
+     *
+     * Bid price selectors tried in order:
+     * 1. CSS class/ID selectors targeting common bid display elements:
+     *    - [class*="bid-amount"], [class*="current-bid"], [class*="high-bid"]
+     *    - [class*="bidPrice"], [id*="currentBid"], [id*="bidAmount"]
+     * 2. Fallback regex patterns in page body text:
+     *    - /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     *    - /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     *    - /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     *    - /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      */
     function extractBidPrice(): number | null {
-      // Try common selectors first
+      // Try CSS class/ID selectors first - target TechLiquidators bid elements
       const bidSelectors = [
-        '[class*="bid-amount"]',
-        '[class*="current-bid"]',
-        '[class*="high-bid"]',
-        '[class*="bidPrice"]',
-        '[id*="currentBid"]',
-        '[id*="bidAmount"]',
+        '[class*="bid-amount"]', // Bid amount display
+        '[class*="current-bid"]', // Current bid container
+        '[class*="high-bid"]', // High bid indicator
+        '[class*="bidPrice"]', // CamelCase bid price
+        '[id*="currentBid"]', // ID-based current bid
+        '[id*="bidAmount"]', // ID-based bid amount
       ]
 
       for (const selector of bidSelectors) {
@@ -95,13 +105,13 @@ export const techLiquidatorsRetailer: RetailerModule = {
         }
       }
 
-      // Search for label-based patterns in page text
-      // Look for "Current Bid: $X,XXX" or "High Bid: $X,XXX" patterns
+      // Fallback: Search page text for "Current Bid: $X,XXX" pattern
+      // This catches bid amounts even if CSS selectors fail due to layout changes
       const bidPatterns = [
-        /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
-        /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
-        /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
-        /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Current Bid: $850"
+        /High\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "High Bid: $850"
+        /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Winning Bid: $850"
+        /Bid\s*Price[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Bid Price: $850"
       ]
 
       for (const pattern of bidPatterns) {
@@ -118,37 +128,48 @@ export const techLiquidatorsRetailer: RetailerModule = {
     /**
      * Extract shipping fee from DOM
      * Look for "Shipping:", "Freight:", "Estimated Shipping:" in listing details
+     *
+     * Shipping selectors tried in order:
+     * 1. CSS class/ID selectors targeting common shipping display elements:
+     *    - [class*="shipping"], [class*="freight"]
+     *    - [id*="shipping"], [id*="freight"]
+     * 2. Free shipping check: returns 0 if "free" found in text (not null)
+     * 3. Fallback regex patterns in page body text:
+     *    - /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     *    - /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     *    - /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      */
     function extractShippingFee(): number | null {
-      // Try common selectors first
+      // Try CSS class/ID selectors first - target TechLiquidators shipping elements
       const shippingSelectors = [
-        '[class*="shipping"]',
-        '[class*="freight"]',
-        '[id*="shipping"]',
-        '[id*="freight"]',
+        '[class*="shipping"]', // Shipping cost container
+        '[class*="freight"]', // Freight cost element
+        '[id*="shipping"]', // ID-based shipping
+        '[id*="freight"]', // ID-based freight
       ]
 
       for (const selector of shippingSelectors) {
         const el = document.querySelector(selector)
         if (el?.textContent) {
           const text = el.textContent.toLowerCase()
-          // Check for free shipping
+          // Free shipping check: returns 0 (distinguishes from not-found which returns null)
           if (text.includes('free')) return 0
           const parsed = parsePrice(el.textContent)
           if (parsed !== null) return parsed
         }
       }
 
-      // Check for free shipping in body text
+      // Fallback: Search page text for shipping patterns
+      // Free shipping check first (return 0, not null)
       if (/shipping[:\s]*free/i.test(bodyText) || /free\s*shipping/i.test(bodyText)) {
         return 0
       }
 
-      // Look for "Shipping: $XXX" or "Freight: $XXX" patterns
+      // Shipping amount patterns
       const shippingPatterns = [
-        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
-        /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
-        /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Shipping: $125"
+        /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Freight: $125"
+        /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Estimated Shipping: $125"
       ]
 
       for (const pattern of shippingPatterns) {

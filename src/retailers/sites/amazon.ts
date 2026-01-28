@@ -43,6 +43,11 @@ export const amazonRetailer: RetailerModule = {
   /**
    * Extract metadata from Amazon page
    * Runs in ISOLATED world
+   *
+   * Bid price selectors: None - AMZD is fixed-price, not auction
+   * bidPrice always returns null for Amazon Direct listings
+   *
+   * See extractShippingFee() for shipping fee selectors
    */
   extractMetadata: function () {
     let listingName = 'Amazon Listing'
@@ -65,28 +70,40 @@ export const amazonRetailer: RetailerModule = {
     /**
      * Extract shipping fee from DOM
      * Look in delivery/shipping section for shipping cost
-     * Amazon Direct is fixed-price, so bidPrice will always be null
+     *
+     * AMZD is fixed-price, not auction - bidPrice always returns null
+     *
+     * Shipping selectors tried in order:
+     * 1. Amazon-specific ID/attribute selectors:
+     *    - #delivery-message, #deliveryBlockMessage, #mir-layout-DELIVERY_BLOCK
+     *    - [data-csa-c-content-id*="shipping"]
+     * 2. Generic class selectors:
+     *    - [class*="delivery"], [class*="shipping"]
+     * 3. Free shipping check: returns 0 if "free shipping/delivery" found (not null)
+     * 4. Fallback regex patterns in page body text:
+     *    - /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+     *    - /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      */
     function extractShippingFee(): number | null {
-      // Try common Amazon shipping selectors
+      // Try Amazon-specific shipping selectors first
       const shippingSelectors = [
-        '#delivery-message',
-        '[data-csa-c-content-id*="shipping"]',
-        '#deliveryBlockMessage',
-        '#mir-layout-DELIVERY_BLOCK',
-        '[class*="delivery"]',
-        '[class*="shipping"]',
+        '#delivery-message', // Amazon delivery info container
+        '[data-csa-c-content-id*="shipping"]', // Amazon analytics-tagged shipping element
+        '#deliveryBlockMessage', // Alternative delivery block
+        '#mir-layout-DELIVERY_BLOCK', // MIR layout delivery section
+        '[class*="delivery"]', // Generic delivery class
+        '[class*="shipping"]', // Generic shipping class
       ]
 
       for (const selector of shippingSelectors) {
         const el = document.querySelector(selector)
         if (el?.textContent) {
           const text = el.textContent.toLowerCase()
-          // Check for FREE Shipping
+          // Free shipping check: returns 0 (distinguishes from not-found which returns null)
           if (text.includes('free shipping') || text.includes('free delivery')) {
             return 0
           }
-          // Try to extract shipping price
+          // Try to extract shipping price from element text
           const priceMatch = el.textContent.match(/\$?([\d,]+(?:\.\d{2})?)\s*(?:shipping|delivery)/i)
           if (priceMatch) {
             const parsed = parsePrice(priceMatch[1])
@@ -95,18 +112,19 @@ export const amazonRetailer: RetailerModule = {
         }
       }
 
-      // Search body text for shipping patterns
+      // Fallback: Search page text for shipping patterns
+      // This catches shipping fees even if CSS selectors fail due to layout changes
       const bodyText = document.body.innerText || ''
 
-      // Check for free shipping first
+      // Free shipping check first (return 0, not null)
       if (/free\s*(?:shipping|delivery)/i.test(bodyText)) {
         return 0
       }
 
-      // Look for "Shipping: $XXX" patterns
+      // Shipping amount patterns
       const shippingPatterns = [
-        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
-        /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i,
+        /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Shipping: $12.99"
+        /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i, // "Delivery: $12.99"
       ]
 
       for (const pattern of shippingPatterns) {
