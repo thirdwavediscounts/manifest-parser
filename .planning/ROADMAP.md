@@ -138,10 +138,11 @@ Plans:
   2. Each retailer has documented DOM selectors for shipping fee extraction
   3. Selectors verified against current retailer page structures
   4. Fallback strategies documented for missing/changed elements
-**Plans**: 0 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 8 to break down)
+- [ ] 08-01-PLAN.md — Create SELECTORS.md documentation and add inline code comments
+- [ ] 08-02-PLAN.md — Create E2E test infrastructure for selector validation
 
 ### Phase 9: Raw Manifest Enhancement
 **Goal**: Append auction metadata columns to raw manifest downloads
@@ -171,10 +172,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 5. Auction Metadata Extraction | 2/2 | Complete | 2026-01-27 |
 | 6. UI Integration | 1/1 | Complete | 2026-01-27 |
 | 7. File Naming Optimization | 2/2 | Complete | 2026-01-28 |
-| 8. Metadata DOM Audit | 0/? | Pending | - |
+| 8. Metadata DOM Audit | 0/2 | Planned | - |
 | 9. Raw Manifest Enhancement | 0/? | Pending | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Updated: 2026-01-28 — Phase 7 planned (2 plans)*
-*Total requirements: 29+ | Total phases: 9 | Total plans: 13+ (estimated)*
+*Updated: 2026-01-28 — Phase 8 planned (2 plans)*
+*Total requirements: 29+ | Total phases: 9 | Total plans: 15+ (estimated)*
