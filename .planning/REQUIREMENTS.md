@@ -18,7 +18,7 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 - [x] **MAP-01**: ACE mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
 - [x] **MAP-02**: AMZ mapping — item_number=ASIN, product_name=Item Description, unit_retail=Unit Retail
-- [ ] **MAP-03**: AMZD mapping — item_number=ASIN, product_name=Item Title, unit_retail=Lot item price x 4.5
+- [x] **MAP-03**: AMZD mapping — item_number=ASIN, product_name=Item Title, unit_retail=Lot item price x 4.5
 - [x] **MAP-04**: ATT mapping — item_number=UPC (blank if "not available"), product_name=Item Description, unit_retail=Unit Retail
 - [x] **MAP-05**: COSTCO mapping — item_number=Item #, product_name=Item Description, unit_retail=Unit Retail
 - [x] **MAP-06**: BY mapping — item_number=UPC, product_name=Item Description, unit_retail=Unit Retail
@@ -36,20 +36,20 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 ### Data Processing
 
-- [ ] **PROC-01**: Trim whitespace from all field values
-- [ ] **PROC-02**: Remove/clean special characters from field values
-- [ ] **PROC-03**: Deduplicate rows with same identifier — combine quantities
-- [ ] **PROC-04**: When deduplicating, use product_name and unit_retail from row with highest quantity
-- [ ] **PROC-05**: Sort output by highest unit_retail first, then alphabetical by product_name
+- [x] **PROC-01**: Trim whitespace from all field values
+- [x] **PROC-02**: Remove/clean special characters from field values
+- [x] **PROC-03**: Deduplicate rows with same identifier — combine quantities
+- [x] **PROC-04**: When deduplicating, use product_name and unit_retail from row with highest quantity
+- [x] **PROC-05**: Sort output by highest unit_retail first, then alphabetical by product_name
 
 ### AMZD Special Handling
 
-- [ ] **AMZD-01**: Implement right-anchor parsing for misaligned columns
-- [ ] **AMZD-02**: Locate Lot item price at column -2 from right
-- [ ] **AMZD-03**: Locate Qty at column -3 from right
-- [ ] **AMZD-04**: Locate Seller Name at column -4 from right (ignore value)
-- [ ] **AMZD-05**: Find ASIN by scanning row for B0XXXXXXXXX pattern
-- [ ] **AMZD-06**: Merge split Item Title columns (everything between ASIN and Seller Name)
+- [x] **AMZD-01**: Implement right-anchor parsing for misaligned columns
+- [x] **AMZD-02**: Locate Lot item price at column -2 from right
+- [x] **AMZD-03**: Locate Qty at column -3 from right
+- [x] **AMZD-04**: Locate Seller Name at column -4 from right (ignore value)
+- [x] **AMZD-05**: Find ASIN by scanning row for B0XXXXXXXXX pattern
+- [x] **AMZD-06**: Merge split Item Title columns (everything between ASIN and Seller Name)
 
 ### File Naming
 
@@ -65,9 +65,9 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 
 ### Raw File Enhancement
 
-- [ ] **RAW-01**: Raw CSV/XLSX downloads include auction_url, bid_price, shipping_fee as appended columns
-- [ ] **RAW-02**: Metadata values appear only on first data row (subsequent rows empty for these columns)
-- [ ] **RAW-03**: Works for both tab-processed manifests and direct URL downloads
+- [x] **RAW-01**: Raw CSV/XLSX downloads include auction_url, bid_price, shipping_fee as appended columns
+- [x] **RAW-02**: Metadata values appear only on first data row (subsequent rows empty for these columns)
+- [x] **RAW-03**: Works for both tab-processed manifests and direct URL downloads
 
 ## v2 Requirements
 
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-04 | Phase 1 | Complete |
 | MAP-01 | Phase 2 | Complete |
 | MAP-02 | Phase 2 | Complete |
-| MAP-03 | Phase 3 | Pending |
+| MAP-03 | Phase 3 | Complete |
 | MAP-04 | Phase 2 | Complete |
 | MAP-05 | Phase 2 | Complete |
 | MAP-06 | Phase 2 | Complete |
@@ -117,26 +117,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 | META-01 | Phase 5 | Complete |
 | META-02 | Phase 5 | Complete |
 | META-03 | Phase 5 | Complete |
-| PROC-01 | Phase 4 | Pending |
-| PROC-02 | Phase 4 | Pending |
-| PROC-03 | Phase 4 | Pending |
-| PROC-04 | Phase 4 | Pending |
-| PROC-05 | Phase 4 | Pending |
-| AMZD-01 | Phase 3 | Pending |
-| AMZD-02 | Phase 3 | Pending |
-| AMZD-03 | Phase 3 | Pending |
-| AMZD-04 | Phase 3 | Pending |
-| AMZD-05 | Phase 3 | Pending |
-| AMZD-06 | Phase 3 | Pending |
+| PROC-01 | Phase 4 | Complete |
+| PROC-02 | Phase 4 | Complete |
+| PROC-03 | Phase 4 | Complete |
+| PROC-04 | Phase 4 | Complete |
+| PROC-05 | Phase 4 | Complete |
+| AMZD-01 | Phase 3 | Complete |
+| AMZD-02 | Phase 3 | Complete |
+| AMZD-03 | Phase 3 | Complete |
+| AMZD-04 | Phase 3 | Complete |
+| AMZD-05 | Phase 3 | Complete |
+| AMZD-06 | Phase 3 | Complete |
 | NAME-01 | Phase 7 | Complete |
 | NAME-02 | Phase 7 | Complete |
 | NAME-03 | Phase 7 | Complete |
 | NAME-04 | Phase 7 | Complete |
 | META-04 | Phase 8 | Complete |
 | META-05 | Phase 8 | Complete |
-| RAW-01 | Phase 9 | Pending |
-| RAW-02 | Phase 9 | Pending |
-| RAW-03 | Phase 9 | Pending |
+| RAW-01 | Phase 9 | Complete |
+| RAW-02 | Phase 9 | Complete |
+| RAW-03 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 38 total
@@ -145,4 +145,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-27*
-*Last updated: 2026-01-28 after adding phases 7, 8, 9*
+*Last updated: 2026-01-28 — All v1 requirements complete*
