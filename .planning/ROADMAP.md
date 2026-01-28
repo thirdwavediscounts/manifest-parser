@@ -153,10 +153,11 @@ Plans:
   2. Metadata values appear only on first data row (subsequent rows have empty values for these columns)
   3. Column headers added to raw file header row
   4. Works for both tab-processed manifests and direct URL downloads
-**Plans**: 0 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 9 to break down)
+- [ ] 09-01-PLAN.md — TDD: appendMetadataToManifest function for raw data transformation
+- [ ] 09-02-PLAN.md — Integrate metadata appending into raw download pipeline
 
 ## Progress
 
@@ -173,9 +174,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 6. UI Integration | 1/1 | Complete | 2026-01-27 |
 | 7. File Naming Optimization | 2/2 | Complete | 2026-01-28 |
 | 8. Metadata DOM Audit | 2/2 | Complete | 2026-01-28 |
-| 9. Raw Manifest Enhancement | 0/? | Pending | - |
+| 9. Raw Manifest Enhancement | 0/2 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Updated: 2026-01-28 — Phase 8 planned (2 plans)*
-*Total requirements: 29+ | Total phases: 9 | Total plans: 15+ (estimated)*
+*Updated: 2026-01-28 — Phase 9 planned (2 plans)*
+*Total requirements: 29+ | Total phases: 9 | Total plans: 17*
