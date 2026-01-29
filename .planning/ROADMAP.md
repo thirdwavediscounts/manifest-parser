@@ -3,7 +3,7 @@
 ## Milestones
 
 - v1.0 MVP - Phases 1-9 (shipped 2026-01-28)
-- v1.1 Metadata Fix + Verification - Phases 10-13 (in progress)
+- v1.1 Metadata Fix + Verification - Phases 10-13 (shipped 2026-01-29)
 
 ## Phases
 
@@ -151,11 +151,11 @@ Plans:
   3. Raw mode passes through manifest data without cleaning/sorting, only appending 3 metadata columns
   4. AMZD shipping_fee extraction returns correct value from Amazon product page
   5. Playwright E2E tests pass for AMZD (metadata + row count verification)
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 13-01-PLAN.md — Fix AMZD CSV parsing (raw line-level append + unified __parsed_extra handling)
-- [ ] 13-02-PLAN.md — Fix AMZD metadata extraction + E2E verify
+- [x] 13-01-PLAN.md — Fix AMZD CSV parsing (raw line-level append + unified __parsed_extra handling)
+- [x] 13-02-PLAN.md — Fix AMZD metadata extraction + E2E verify
 
 ## Progress
 
@@ -176,9 +176,9 @@ Phase 10 first (infrastructure). Then Phases 11, 12, 13 can execute in parallel.
 | 10. Playwright E2E Infrastructure | v1.1 | 1/1 | Complete | 2026-01-29 |
 | 11. B-Stock Classic Fix + E2E | v1.1 | 1/1 | Complete | 2026-01-29 |
 | 12. B-Stock Next.js Fix + E2E | v1.1 | 2/2 | Complete | 2026-01-29 |
-| 13. AMZD CSV + Metadata Fix + E2E | v1.1 | 0/2 | Not started | - |
+| 13. AMZD CSV + Metadata Fix + E2E | v1.1 | 2/2 | Complete | 2026-01-29 |
 
 ---
 *Roadmap created: 2026-01-27*
 *Updated: 2026-01-29 — Added v1.1 milestone (phases 10-13, 6 plans, E2E integrated per phase)*
-*Total requirements: 65+ | Total phases: 13 | Total plans: 23*
+*Total requirements: 65+ | Total phases: 13 | Total plans: 24*

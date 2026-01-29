@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 
 Phase: 13 of 13 (AMZD CSV + Metadata Fix + E2E)
 Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-29 — Completed 13-02-PLAN.md
+Status: Phase complete (verified — 7/7 must-haves passed)
+Last activity: 2026-01-29 — v1.1 milestone complete
 
 Progress: [========================] 100% (24/24 plans)
 
@@ -67,5 +67,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 13-02-PLAN.md — ALL PLANS COMPLETE
+Stopped at: v1.1 milestone complete — all 13 phases shipped
 Resume file: None

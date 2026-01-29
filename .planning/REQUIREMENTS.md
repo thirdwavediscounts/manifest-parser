@@ -99,21 +99,21 @@ Requirements for metadata fix + AMZD CSV fix + E2E verification milestone.
 
 ### Amazon Direct Fix
 
-- [ ] **SEL-19**: AMZD shipping_fee extraction returns correct value from Amazon product page
-- [ ] **SEL-20**: AMZD bid_price correctly returns null (fixed-price, not auction)
+- [x] **SEL-19**: AMZD shipping_fee extraction returns correct value from Amazon product page
+- [x] **SEL-20**: AMZD bid_price correctly returns null (fixed-price, not auction)
 
 ### AMZD CSV Parsing Fix
 
-- [ ] **CSV-01**: AMZD raw CSV download preserves all rows (no truncation from embedded newlines)
-- [ ] **CSV-02**: AMZD columns do not bleed together (right-anchor extraction includes __parsed_extra data)
-- [ ] **CSV-03**: Raw mode passes through manifest data without cleaning/sorting — only appends 3 metadata columns
+- [x] **CSV-01**: AMZD raw CSV download preserves all rows (no truncation from embedded newlines)
+- [x] **CSV-02**: AMZD columns do not bleed together (right-anchor extraction includes __parsed_extra data)
+- [x] **CSV-03**: Raw mode passes through manifest data without cleaning/sorting — only appends 3 metadata columns
 
 ### E2E Verification
 
 - [x] **E2E-01**: Playwright E2E test infrastructure set up for Chrome extension testing
-- [ ] **E2E-02**: Each retailer has a live URL E2E test verifying bid_price extraction
-- [ ] **E2E-03**: Each retailer has a live URL E2E test verifying shipping_fee extraction
-- [ ] **E2E-04**: AMZD E2E test verifying raw CSV row count matches source manifest
+- [x] **E2E-02**: Each retailer has a live URL E2E test verifying bid_price extraction
+- [x] **E2E-03**: Each retailer has a live URL E2E test verifying shipping_fee extraction
+- [x] **E2E-04**: AMZD E2E test verifying raw CSV row count matches source manifest
 
 ## v2 Requirements
 
@@ -175,11 +175,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | SEL-09 through SEL-18 | Phase 12 | Complete |
 | E2E-02 (Next.js) | Phase 12 | Complete |
 | E2E-03 (Next.js) | Phase 12 | Complete |
-| CSV-01 through CSV-03 | Phase 13 | Pending |
-| SEL-19, SEL-20 | Phase 13 | Pending |
-| E2E-02 (AMZD) | Phase 13 | Pending |
-| E2E-03 (AMZD) | Phase 13 | Pending |
-| E2E-04 | Phase 13 | Pending |
+| CSV-01 through CSV-03 | Phase 13 | Complete |
+| SEL-19, SEL-20 | Phase 13 | Complete |
+| E2E-02 (AMZD) | Phase 13 | Complete |
+| E2E-03 (AMZD) | Phase 13 | Complete |
+| E2E-04 | Phase 13 | Complete |
 
 **Coverage:**
 - v1 requirements: 38 total — all complete
