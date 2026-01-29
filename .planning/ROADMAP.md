@@ -1,37 +1,19 @@
 # Roadmap: Manifest Parser Extension
 
-## Overview
+## Milestones
 
-Transform the existing Chrome extension from raw manifest downloads to producing clean, unified CSV output. The journey starts with establishing the unified format structure, then implements retailer-specific field mappings (with special handling for complex AMZD parsing), adds data processing (deduplication, sorting, cleaning), extracts auction metadata from pages, and concludes with UI integration for format selection.
+- v1.0 MVP - Phases 1-9 (shipped 2026-01-28)
+- v1.1 Metadata Fix + Verification - Phases 10-13 (in progress)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-- [x] **Phase 1: Unified Format Foundation** - Establish unified CSV structure and transformation pipeline
-- [x] **Phase 2: Standard Retailer Mappings** - Map 10 retailers with consistent column patterns
-- [x] **Phase 3: AMZD Special Handling** - Complex parsing for misaligned Amazon Direct manifests
-- [x] **Phase 4: Data Processing Pipeline** - Clean, deduplicate, and sort data
-- [x] **Phase 5: Auction Metadata Extraction** - Extract bid price and shipping from pages
-- [x] **Phase 6: UI Integration** - User toggle between raw and unified format
-- [x] **Phase 7: File Naming Optimization** - Smart title truncation with word-aware abbreviation
-- [x] **Phase 8: Metadata DOM Audit** - Clear and document bid/shipping selectors per retailer
-- [x] **Phase 9: Raw Manifest Enhancement** - Append auction metadata columns to raw file downloads
-
-## Phase Details
+<details>
+<summary>v1.0 MVP (Phases 1-9) - SHIPPED 2026-01-28</summary>
 
 ### Phase 1: Unified Format Foundation
 **Goal**: Establish the unified CSV output structure that all retailer data transforms into
-**Depends on**: Nothing (first phase)
 **Requirements**: OUT-01, OUT-02, OUT-04
-**Success Criteria** (what must be TRUE):
-  1. Processing a manifest produces CSV with headers: item_number, product_name, qty, unit_retail, auction_url, bid_price, shipping_fee
-  2. auction_url, bid_price, shipping_fee columns are populated only on the first row (empty on subsequent rows)
-  3. Each manifest file produces a separate CSV (not combined)
-  4. Existing raw file download continues to work (no breaking changes)
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 01-01-PLAN.md — TDD: Core unified format types and transformation
@@ -39,15 +21,8 @@ Plans:
 
 ### Phase 2: Standard Retailer Mappings
 **Goal**: Map 10 retailers with standard column patterns to unified format
-**Depends on**: Phase 1
 **Requirements**: MAP-01, MAP-02, MAP-04, MAP-05, MAP-06, MAP-07, MAP-08, MAP-09, MAP-10, MAP-11
-**Success Criteria** (what must be TRUE):
-  1. ACE manifest UPC becomes item_number, Item Description becomes product_name
-  2. AMZ manifest ASIN becomes item_number, Unit Retail becomes unit_retail
-  3. TL manifest UPC becomes item_number, Product Name becomes product_name, Orig. Retail becomes unit_retail
-  4. All 10 retailers (ACE, AMZ, ATT, COSTCO, BY, JCP, QVC, RC, TGT, TL) produce unified output when processed
-  5. ATT manifests with "not available" UPC result in blank item_number
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 02-01-PLAN.md - TDD: Retailer field mapping configuration with null-value handling
@@ -55,31 +30,17 @@ Plans:
 
 ### Phase 3: AMZD Special Handling
 **Goal**: Parse Amazon Direct manifests with misaligned columns correctly
-**Depends on**: Phase 1
 **Requirements**: MAP-03, AMZD-01, AMZD-02, AMZD-03, AMZD-05, AMZD-06
-**Success Criteria** (what must be TRUE):
-  1. AMZD manifest prices extracted correctly from -2 column position (right-anchored)
-  2. AMZD manifest quantities extracted correctly from -3 column position
-  3. ASIN found by B0XXXXXXXXX pattern scan regardless of column position
-  4. Item Title used directly for product_name (fallback: Model -> Brand)
-  5. unit_retail calculated as Lot item price * 4.5
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [x] 03-01-PLAN.md — TDD: AMZD parser core functions (ASIN detection, right-anchor extraction, price calculation)
-- [x] 03-02-PLAN.md — Integrate AMZD parser into pipeline with integration tests
+- [x] 03-01-PLAN.md — TDD: AMZD parser core functions
+- [x] 03-02-PLAN.md — Integrate AMZD parser into pipeline
 
 ### Phase 4: Data Processing Pipeline
 **Goal**: Clean, deduplicate, and sort manifest data for consistent output
-**Depends on**: Phase 2, Phase 3
 **Requirements**: PROC-01, PROC-02, PROC-03, PROC-04, PROC-05
-**Success Criteria** (what must be TRUE):
-  1. All field values have leading/trailing whitespace trimmed
-  2. Special characters removed or cleaned from field values
-  3. Rows with identical identifiers combined (quantities summed)
-  4. When deduplicating, product_name and unit_retail come from row with highest quantity
-  5. Output sorted by unit_retail descending, then product_name alphabetically
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 04-01-PLAN.md — TDD: Data cleaning and deduplication functions
@@ -87,14 +48,8 @@ Plans:
 
 ### Phase 5: Auction Metadata Extraction
 **Goal**: Extract bid price and shipping fee from auction listing pages
-**Depends on**: Phase 1
 **Requirements**: META-01, META-02, META-03
-**Success Criteria** (what must be TRUE):
-  1. bid_price extracted from auction listing page during tab processing
-  2. shipping_fee extracted from auction listing page during tab processing
-  3. auction_url captured and included in unified output first row
-  4. Metadata extraction works for B-Stock, TechLiquidators, and Amazon Direct pages
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 05-01-PLAN.md — Extend MetadataResult and implement extraction in retailer modules
@@ -102,81 +57,128 @@ Plans:
 
 ### Phase 6: UI Integration
 **Goal**: User can choose between raw files and unified format at download time
-**Depends on**: Phase 4, Phase 5
 **Requirements**: OUT-03
-**Success Criteria** (what must be TRUE):
-  1. Popup UI shows toggle/option for "Raw files" vs "Unified format"
-  2. When "Raw files" selected, original CSV/XLSX downloaded as before
-  3. When "Unified format" selected, processed CSV with unified columns downloaded
-  4. User preference persisted across popup sessions
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
 - [x] 06-01-PLAN.md — Add format toggle to popup UI and wire processing path
 
 ### Phase 7: File Naming Optimization
 **Goal**: Smart title truncation that maximizes readability within ~50 character limit
-**Depends on**: Phase 6
 **Requirements**: NAME-01, NAME-02, NAME-03, NAME-04
-**Success Criteria** (what must be TRUE):
-  1. Filenames stay within ~50 character limit including retailer(3)+condition(3)+time(4)+title
-  2. No mid-word truncation (e.g., "Electroni-" → "Electronics" or next word)
-  3. Common words abbreviated while maintaining readability (e.g., "Accessories" → "Acc")
-  4. Multi-category titles optimized (e.g., "PC Gaming Accessories & Tablet Accessories" → "PC Gaming & Tablet Acc")
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [x] 07-01-PLAN.md — TDD: Filename utility functions (abbreviation, word-boundary truncation)
+- [x] 07-01-PLAN.md — TDD: Filename utility functions
 - [x] 07-02-PLAN.md — Integrate with popup.ts generateListingFilename
 
 ### Phase 8: Metadata DOM Audit
 **Goal**: Document and validate bid price and shipping fee DOM selectors for each retailer
-**Depends on**: Phase 5
 **Requirements**: META-04, META-05
-**Success Criteria** (what must be TRUE):
-  1. Each retailer has documented DOM selectors for bid price extraction
-  2. Each retailer has documented DOM selectors for shipping fee extraction
-  3. Selectors verified against current retailer page structures
-  4. Fallback strategies documented for missing/changed elements
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [x] 08-01-PLAN.md — Create SELECTORS.md documentation and add inline code comments
+- [x] 08-01-PLAN.md — Create SELECTORS.md documentation
 - [x] 08-02-PLAN.md — Create E2E test infrastructure for selector validation
 
 ### Phase 9: Raw Manifest Enhancement
 **Goal**: Append auction metadata columns to raw manifest downloads
-**Depends on**: Phase 8
 **Requirements**: RAW-01, RAW-02, RAW-03
+**Plans**: 2/2 complete
+
+Plans:
+- [x] 09-01-PLAN.md — TDD: appendMetadataToManifest function
+- [x] 09-02-PLAN.md — Integrate metadata appending into raw download pipeline
+
+</details>
+
+### v1.1 Metadata Fix + Verification (In Progress)
+
+**Milestone Goal:** Fix metadata extraction returning 0 for 9 of 11 retailers, fix AMZD CSV parsing issues, and E2E verify each retailer group against live auction pages as fixes are applied.
+
+#### Phase 10: Playwright E2E Infrastructure
+**Goal**: Set up Playwright test infrastructure for Chrome extension E2E testing — used by all subsequent phases
+**Depends on**: Nothing (first phase)
+**Requirements**: E2E-01
 **Success Criteria** (what must be TRUE):
-  1. Raw CSV/XLSX downloads include auction_url, bid_price, shipping_fee as last 3 columns
-  2. Metadata values appear only on first data row (subsequent rows have empty values for these columns)
-  3. Column headers added to raw file header row
-  4. Works for both tab-processed manifests and direct URL downloads
+  1. Playwright launches Chromium with extension loaded via persistent context
+  2. Test can navigate to a live auction URL and access the extension popup
+  3. Test can verify metadata extraction results from the extension
+  4. TL (already working) passes as smoke test to validate infrastructure
+**Plans**: 1 plan
+
+Plans:
+- [ ] 10-01: Set up Playwright Chrome extension E2E infrastructure with TL smoke test
+
+#### Phase 11: B-Stock Classic Selector Fix + E2E
+**Goal**: ACE, BY, JCP, and QVC return correct bid_price and shipping_fee — verified E2E against live pages
+**Depends on**: Phase 10
+**Requirements**: SEL-01, SEL-02, SEL-03, SEL-04, SEL-05, SEL-06, SEL-07, SEL-08, E2E-02 (partial), E2E-03 (partial)
+**Success Criteria** (what must be TRUE):
+  1. ACE auction page extraction returns a real dollar amount for bid_price (not 0)
+  2. ACE auction page extraction returns a real dollar amount for shipping_fee (not 0)
+  3. BY, JCP auction pages each return correct bid_price and shipping_fee values
+  4. QVC bid_price continues working; QVC shipping_fee now returns correct value (not 0)
+  5. Playwright E2E tests pass for all 4 Classic retailers (bid_price + shipping_fee each)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 11-01: Fix B-Stock Classic selectors and E2E verify against live pages
+
+#### Phase 12: B-Stock Next.js JSON Fix + E2E
+**Goal**: AMZ, ATT, COSTCO, RC, and TGT return correct bid_price and shipping_fee via `__NEXT_DATA__` — verified E2E
+**Depends on**: Phase 10
+**Requirements**: SEL-09, SEL-10, SEL-11, SEL-12, SEL-13, SEL-14, SEL-15, SEL-16, SEL-17, SEL-18, E2E-02 (partial), E2E-03 (partial)
+**Success Criteria** (what must be TRUE):
+  1. AMZ auction page extraction returns correct bid_price and shipping_fee from `__NEXT_DATA__`
+  2. TGT auction page extraction returns correct bid_price and shipping_fee from `__NEXT_DATA__`
+  3. COSTCO, RC, ATT auction pages each return correct bid_price and shipping_fee
+  4. Per-retailer JSON path mapping exists (not hardcoded single path for all)
+  5. Playwright E2E tests pass for all 5 Next.js retailers (bid_price + shipping_fee each)
 **Plans**: 2 plans
 
 Plans:
-- [x] 09-01-PLAN.md — TDD: appendMetadataToManifest function for raw data transformation
-- [x] 09-02-PLAN.md — Integrate metadata appending into raw download pipeline
+- [ ] 12-01: Inspect live Next.js pages and map JSON paths per retailer
+- [ ] 12-02: Implement verified JSON extraction + E2E tests for all 5 Next.js retailers
+
+#### Phase 13: AMZD CSV + Metadata Fix + E2E
+**Goal**: Amazon Direct raw CSV downloads preserve all rows with correct columns, metadata works — verified E2E
+**Depends on**: Phase 10
+**Requirements**: CSV-01, CSV-02, CSV-03, SEL-19, SEL-20, E2E-02 (partial), E2E-03 (partial), E2E-04
+**Success Criteria** (what must be TRUE):
+  1. AMZD raw CSV download contains all rows from source manifest (no truncation from embedded newlines)
+  2. AMZD columns do not bleed together (right-anchor extraction handles `__parsed_extra` data)
+  3. Raw mode passes through manifest data without cleaning/sorting, only appending 3 metadata columns
+  4. AMZD shipping_fee extraction returns correct value from Amazon product page
+  5. Playwright E2E tests pass for AMZD (metadata + row count verification)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 13-01: Fix AMZD CSV parsing (row truncation + column bleeding)
+- [ ] 13-02: Fix AMZD metadata extraction + E2E verify
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
+Phase 10 first (infrastructure). Then Phases 11, 12, 13 can execute in parallel.
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Unified Format Foundation | 2/2 | Complete | 2026-01-27 |
-| 2. Standard Retailer Mappings | 2/2 | Complete | 2026-01-27 |
-| 3. AMZD Special Handling | 2/2 | Complete | 2026-01-27 |
-| 4. Data Processing Pipeline | 2/2 | Complete | 2026-01-27 |
-| 5. Auction Metadata Extraction | 2/2 | Complete | 2026-01-27 |
-| 6. UI Integration | 1/1 | Complete | 2026-01-27 |
-| 7. File Naming Optimization | 2/2 | Complete | 2026-01-28 |
-| 8. Metadata DOM Audit | 2/2 | Complete | 2026-01-28 |
-| 9. Raw Manifest Enhancement | 2/2 | Complete | 2026-01-28 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Unified Format Foundation | v1.0 | 2/2 | Complete | 2026-01-27 |
+| 2. Standard Retailer Mappings | v1.0 | 2/2 | Complete | 2026-01-27 |
+| 3. AMZD Special Handling | v1.0 | 2/2 | Complete | 2026-01-27 |
+| 4. Data Processing Pipeline | v1.0 | 2/2 | Complete | 2026-01-27 |
+| 5. Auction Metadata Extraction | v1.0 | 2/2 | Complete | 2026-01-27 |
+| 6. UI Integration | v1.0 | 1/1 | Complete | 2026-01-27 |
+| 7. File Naming Optimization | v1.0 | 2/2 | Complete | 2026-01-28 |
+| 8. Metadata DOM Audit | v1.0 | 2/2 | Complete | 2026-01-28 |
+| 9. Raw Manifest Enhancement | v1.0 | 2/2 | Complete | 2026-01-28 |
+| 10. Playwright E2E Infrastructure | v1.1 | 0/1 | Not started | - |
+| 11. B-Stock Classic Fix + E2E | v1.1 | 0/1 | Not started | - |
+| 12. B-Stock Next.js Fix + E2E | v1.1 | 0/2 | Not started | - |
+| 13. AMZD CSV + Metadata Fix + E2E | v1.1 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Updated: 2026-01-28 — Milestone complete (9 phases, 17 plans)*
-*Total requirements: 29+ | Total phases: 9 | Total plans: 17*
+*Updated: 2026-01-29 — Added v1.1 milestone (phases 10-13, 6 plans, E2E integrated per phase)*
+*Total requirements: 65+ | Total phases: 13 | Total plans: 23*

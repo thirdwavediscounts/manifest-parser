@@ -168,18 +168,24 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEL-01 through SEL-08 | TBD | Pending |
-| SEL-09 through SEL-18 | TBD | Pending |
-| SEL-19, SEL-20 | TBD | Pending |
-| CSV-01 through CSV-03 | TBD | Pending |
-| E2E-01 through E2E-04 | TBD | Pending |
+| E2E-01 | Phase 10 | Pending |
+| SEL-01 through SEL-08 | Phase 11 | Pending |
+| E2E-02 (Classic) | Phase 11 | Pending |
+| E2E-03 (Classic) | Phase 11 | Pending |
+| SEL-09 through SEL-18 | Phase 12 | Pending |
+| E2E-02 (Next.js) | Phase 12 | Pending |
+| E2E-03 (Next.js) | Phase 12 | Pending |
+| CSV-01 through CSV-03 | Phase 13 | Pending |
+| SEL-19, SEL-20 | Phase 13 | Pending |
+| E2E-02 (AMZD) | Phase 13 | Pending |
+| E2E-03 (AMZD) | Phase 13 | Pending |
+| E2E-04 | Phase 13 | Pending |
 
 **Coverage:**
 - v1 requirements: 38 total — all complete
-- v1.1 requirements: 27 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 27
+- v1.1 requirements: 27 total — all mapped to phases 10-13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-27*
-*Last updated: 2026-01-29 after v1.1 milestone initialization*
+*Last updated: 2026-01-29 — v1.1 traceability complete*
