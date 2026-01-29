@@ -62,7 +62,14 @@ function parseAmzdManifest(
   const parsedDate = new Date().toISOString()
 
   for (const row of rawData) {
-    const cells = Object.values(row)
+    // Build cells array: use Object.values but replace the __parsed_extra array
+    // with its individual elements (PapaParse includes it as a single array value)
+    const rawValues = Object.values(row)
+    const extra: unknown[] = (row as any).__parsed_extra || []
+    // If __parsed_extra exists, Object.values includes it as an array element — remove it and spread
+    const cells = extra.length > 0
+      ? [...rawValues.filter(v => v !== extra), ...extra]
+      : rawValues
     const parsed = parseAmzdRow(row, cells, headers)
 
     if (parsed) {
@@ -71,6 +78,17 @@ function parseAmzdManifest(
         productName: parsed.productName || 'Unknown Product',
         quantity: parsed.qty,
         unitRetail: parsed.unitRetail,
+        sourceSite: site,
+        originalFilename: filename,
+        parsedDate,
+      })
+    } else if (cells.length > 0) {
+      // Row had data but recovery failed — include with empty fields, never drop
+      items.push({
+        upc: '',
+        productName: 'Unknown Product',
+        quantity: 1,
+        unitRetail: 0,
         sourceSite: site,
         originalFilename: filename,
         parsedDate,

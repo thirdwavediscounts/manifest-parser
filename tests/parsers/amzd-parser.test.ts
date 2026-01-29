@@ -247,6 +247,34 @@ describe('AMZD Parser', () => {
         expect(result).toBeNull()
       })
 
+      it('should include __parsed_extra in cells for misalignment detection', () => {
+        // Simulate a PapaParse row with __parsed_extra
+        const row: Record<string, unknown> = {
+          'Condition': 'Return',
+          'Product Type': 'Electronics',
+          'Brand': 'Apple',
+          'ASIN': 'B083WFQC1C',
+          'Item Title': 'Title with',
+          'Seller Name': 'extra comma',
+          'Qty': '6',
+          'Lot item price': '$17.75',
+          'Total lot price': '$106.50',
+        }
+        // PapaParse adds __parsed_extra as a non-enumerable-like array
+        ;(row as any).__parsed_extra = ['overflow1', 'overflow2']
+
+        // Simulate what base-parser now does: filter out the __parsed_extra array, spread its elements
+        const extra: unknown[] = (row as any).__parsed_extra || []
+        const rawValues = Object.values(row)
+        const cells = extra.length > 0
+          ? [...rawValues.filter(v => v !== extra), ...extra]
+          : rawValues
+        const result = isAmzdMisaligned(cells, headers)
+
+        expect(result).toBe(true)
+        expect(cells.length).toBe(11) // 9 regular + 2 extra
+      })
+
       it('should return null when no ASIN, productName, or price', () => {
         const row = {
           'Condition': 'Return',
@@ -271,6 +299,20 @@ describe('AMZD Parser', () => {
         const result = parseAmzdRow(row, cells, Object.keys(row))
 
         expect(result!.unitRetail).toBe(5555.52) // 1234.56 * 4.5
+      })
+
+      it('should return null for rows with no usable data (recovery fails)', () => {
+        // Row has cells but no ASIN, no productName, no price — parseAmzdRow returns null
+        // base-parser will create a fallback ManifestItem for this case
+        const row = {
+          'Condition': 'Return',
+          'Seller Name': 'Amazon',
+        }
+        const cells = Object.values(row)
+        const result = parseAmzdRow(row, cells, ['Condition', 'Seller Name'])
+
+        // parseAmzdRow returns null — base-parser handles the fallback
+        expect(result).toBeNull()
       })
 
       it('should default qty to 1 when missing or invalid', () => {
