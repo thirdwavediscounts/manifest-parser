@@ -149,27 +149,31 @@ export const bstockRetailer: RetailerModule = {
       // Try __NEXT_DATA__ fields first - most reliable source on B-Stock marketplace
       if (nextData) {
         const data = nextData as Record<string, unknown>
-        // Look for common bid price fields in the listing data structure
+
+        // Primary: auction.winningBidAmount (verified 2026-01-29, value in dollars)
+        const auction = data.auction as Record<string, unknown> | undefined
+        if (auction) {
+          if (typeof auction.winningBidAmount === 'number' && auction.winningBidAmount > 0) {
+            return auction.winningBidAmount as number
+          }
+          // Fallback within auction object
+          if (typeof auction.startPrice === 'number' && auction.startPrice > 0) {
+            return auction.startPrice as number
+          }
+        }
+
+        // Legacy fallback: top-level or lot-nested fields
         const bidFields = ['currentBid', 'winningBid', 'highBid', 'currentPrice', 'bidAmount']
         for (const field of bidFields) {
           if (typeof data[field] === 'number') {
             return data[field] as number
           }
-          if (typeof data[field] === 'string') {
-            const parsed = parsePrice(data[field] as string)
-            if (parsed !== null) return parsed
-          }
         }
-        // Check nested lot object
         const lot = data.lot as Record<string, unknown> | undefined
         if (lot) {
           for (const field of bidFields) {
             if (typeof lot[field] === 'number') {
               return lot[field] as number
-            }
-            if (typeof lot[field] === 'string') {
-              const parsed = parsePrice(lot[field] as string)
-              if (parsed !== null) return parsed
             }
           }
         }
@@ -206,6 +210,12 @@ export const bstockRetailer: RetailerModule = {
               if (text.toLowerCase().includes('free')) {
                 return 0
               }
+              // Check for nested .price child (e.g. <span class="price">$397.86</span>)
+              const priceChild = valueDiv.querySelector('.price')
+              if (priceChild?.textContent) {
+                const parsed = parsePrice(priceChild.textContent)
+                if (parsed !== null) return parsed
+              }
               const parsed = parsePrice(text)
               if (parsed !== null) return parsed
             }
@@ -235,23 +245,27 @@ export const bstockRetailer: RetailerModule = {
       if (nextData) {
         const data = nextData as Record<string, unknown>
 
-        // Look for shipping fields
-        const shippingFields = ['shippingCost', 'estimatedShipping', 'freightCost', 'shipping', 'deliveryCost']
+        // Primary: selectedQuote.totalPrice (verified 2026-01-29, value in CENTS)
+        // This is the "Shipping" line item shown in the "Shipping & Other Charges" dropdown
+        const selectedQuote = data.selectedQuote as Record<string, unknown> | undefined
+        if (selectedQuote && typeof selectedQuote.totalPrice === 'number') {
+          // Convert cents to dollars
+          return (selectedQuote.totalPrice as number) / 100
+        }
+
+        // Legacy fallback: top-level or lot-nested shipping fields
+        const shippingFields = ['shippingCost', 'estimatedShipping', 'freightCost', 'deliveryCost']
         for (const field of shippingFields) {
           if (typeof data[field] === 'number') {
             return data[field] as number
           }
           if (typeof data[field] === 'string') {
             const text = (data[field] as string).toLowerCase()
-            if (text.includes('free')) {
-              return 0
-            }
+            if (text.includes('free')) return 0
             const parsed = parsePrice(data[field] as string)
             if (parsed !== null) return parsed
           }
         }
-
-        // Check nested lot object
         const lot = data.lot as Record<string, unknown> | undefined
         if (lot) {
           for (const field of shippingFields) {
@@ -260,9 +274,7 @@ export const bstockRetailer: RetailerModule = {
             }
             if (typeof lot[field] === 'string') {
               const text = (lot[field] as string).toLowerCase()
-              if (text.includes('free')) {
-                return 0
-              }
+              if (text.includes('free')) return 0
               const parsed = parsePrice(lot[field] as string)
               if (parsed !== null) return parsed
             }

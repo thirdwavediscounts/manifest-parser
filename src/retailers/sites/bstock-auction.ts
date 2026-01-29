@@ -79,9 +79,7 @@ export const bstockAuctionRetailer: RetailerModule = {
      * Look for labels like "Current Bid:", "High Bid:", "Winning Bid:"
      *
      * Bid price selectors tried in order:
-     * 1. CSS class/ID selectors targeting common bid display elements:
-     *    - [class*="bid-amount"], [class*="current-bid"], [class*="winning-bid"]
-     *    - [class*="high-bid"], [id*="currentBid"], [id*="winningBid"]
+     * 1. #current_bid_amount — B-Stock Classic bid display (verified 2026-01-29)
      * 2. Fallback regex patterns in page body text:
      *    - /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      *    - /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
@@ -89,22 +87,11 @@ export const bstockAuctionRetailer: RetailerModule = {
      *    - /Bid\s*Amount[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      */
     function extractBidPrice(): number | null {
-      // Try CSS class/ID selectors first - target common B-Stock auction bid elements
-      const bidSelectors = [
-        '[class*="bid-amount"]', // B-Stock auction bid display
-        '[class*="current-bid"]', // Current bid container
-        '[class*="winning-bid"]', // Winning bid indicator
-        '[class*="high-bid"]', // High bid display
-        '[id*="currentBid"]', // ID-based current bid
-        '[id*="winningBid"]', // ID-based winning bid
-      ]
-
-      for (const selector of bidSelectors) {
-        const el = document.querySelector(selector)
-        if (el?.textContent) {
-          const parsed = parsePrice(el.textContent)
-          if (parsed !== null) return parsed
-        }
+      // Primary: B-Stock Classic uses #current_bid_amount for the bid value
+      const bidAmountEl = document.querySelector('#current_bid_amount')
+      if (bidAmountEl?.textContent) {
+        const parsed = parsePrice(bidAmountEl.textContent)
+        if (parsed !== null) return parsed
       }
 
       // Fallback: Search page text for "Current Bid: $X,XXX" pattern
@@ -133,10 +120,10 @@ export const bstockAuctionRetailer: RetailerModule = {
      * Look for "Shipping:", "Freight:", "Estimated Shipping:" labels
      *
      * Shipping selectors tried in order:
-     * 1. CSS class/ID selectors targeting common shipping display elements:
-     *    - [class*="shipping"], [class*="freight"]
-     *    - [id*="shipping"], [id*="freight"]
-     * 2. Free shipping check: returns 0 if "free" found in text (not null)
+     * 1. #shipping_total_cost — B-Stock Classic shipping container (verified 2026-01-29)
+     *    - Check for "free" text → return 0
+     *    - .price child element contains the dollar amount
+     * 2. Free shipping check in body text: returns 0 if "free" found
      * 3. Fallback regex patterns in page body text:
      *    - /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      *    - /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
@@ -144,26 +131,54 @@ export const bstockAuctionRetailer: RetailerModule = {
      *    - /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
      */
     function extractShippingFee(): number | null {
-      // Try CSS class/ID selectors first - target common B-Stock auction shipping elements
-      const shippingSelectors = [
-        '[class*="shipping"]', // Shipping cost container
-        '[class*="freight"]', // Freight cost (B-Stock terminology)
-        '[id*="shipping"]', // ID-based shipping element
-        '[id*="freight"]', // ID-based freight element
-      ]
-
-      for (const selector of shippingSelectors) {
-        const el = document.querySelector(selector)
-        if (el?.textContent) {
-          const text = el.textContent.toLowerCase()
-          // Free shipping check: returns 0 (distinguishes from not-found which returns null)
-          if (text.includes('free')) return 0
-          const parsed = parsePrice(el.textContent)
-          if (parsed !== null) return parsed
+      // Primary: .auction-data-label sibling approach (most reliable — works even
+      // when #shipping_total_cost is inside an unrendered popup)
+      const labels = document.querySelectorAll('.auction-data-label')
+      for (const label of labels) {
+        const labelText = (label.textContent || '').toLowerCase().trim()
+        if (labelText.includes('shipping cost')) {
+          const parent = label.parentElement
+          if (parent) {
+            const valueDiv = parent.querySelector('.auction-data-content, div:not(.auction-data-label)')
+            if (valueDiv) {
+              const text = (valueDiv.textContent || '').toLowerCase()
+              if (text.includes('free')) return 0
+              // Check for nested .price child (e.g. <span class="price">$397.86</span>)
+              const priceChild = valueDiv.querySelector('.price')
+              if (priceChild?.textContent) {
+                const parsed = parsePrice(priceChild.textContent)
+                if (parsed !== null) return parsed
+              }
+              const parsed = parsePrice(valueDiv.textContent)
+              if (parsed !== null) return parsed
+            }
+          }
+          // Also try next sibling
+          const nextEl = label.nextElementSibling
+          if (nextEl) {
+            const text = (nextEl.textContent || '').toLowerCase()
+            if (text.includes('free')) return 0
+            const parsed = parsePrice(nextEl.textContent)
+            if (parsed !== null) return parsed
+          }
         }
       }
 
-      // Fallback: Search page text for shipping patterns
+      // Secondary: #shipping_total_cost selector (works when element is rendered)
+      const shippingContainer = document.querySelector('#shipping_total_cost')
+      if (shippingContainer) {
+        const text = (shippingContainer.textContent || '').toLowerCase()
+        if (text.includes('free')) return 0
+        const priceEl = shippingContainer.querySelector('.price')
+        if (priceEl?.textContent) {
+          const parsed = parsePrice(priceEl.textContent)
+          if (parsed !== null) return parsed
+        }
+        const parsed = parsePrice(shippingContainer.textContent)
+        if (parsed !== null) return parsed
+      }
+
+      // Tertiary: Search page text for shipping patterns
       // This catches shipping fees even if CSS selectors fail due to layout changes
       const bodyText = document.body.innerText
       // Free shipping check first (return 0, not null)
