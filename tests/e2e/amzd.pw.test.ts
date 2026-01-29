@@ -14,7 +14,8 @@ import { launchBrowserWithExtension, getExtensionId } from './extension.setup'
 // Amazon liquidation listing URLs — these are amazon.com/dp/ product pages
 // These may expire; update as needed
 const AMZD_TEST_URLS = [
-  'https://www.amazon.com/dp/B0DPF24FPJ', // Liquidation pallet listing
+  'https://www.amazon.com/dp/B0GGBJ6D1Q', // Liquidation pallet listing
+  'https://www.amazon.com/dp/B0DPF24FPJ', // Alternative listing
   'https://www.amazon.com/dp/B0DPDJP1VK', // Alternative listing
 ]
 
@@ -168,12 +169,27 @@ test.describe('AMZD E2E', () => {
         }
       }
 
+      // Extract listing price as bid_price (AMZD is fixed-price)
+      let bidPrice: number | null = null
+      const offscreen = document.querySelector('.a-price .a-offscreen')
+      if (offscreen?.textContent) {
+        bidPrice = parsePrice(offscreen.textContent)
+      }
+      if (bidPrice === null) {
+        const whole = document.querySelector('.a-price-whole')
+        const fraction = document.querySelector('.a-price-fraction')
+        if (whole?.textContent) {
+          const priceStr = whole.textContent.replace(/[.,\s]/g, '') + '.' + (fraction?.textContent || '00')
+          bidPrice = parsePrice(priceStr)
+        }
+      }
+
       return {
         isAMZD,
         rawTitle: rawTitle.substring(0, 120),
         shippingFee,
         matchedSelector,
-        bidPrice: null as number | null, // AMZD is fixed-price
+        bidPrice,
       }
     })
 
@@ -188,8 +204,9 @@ test.describe('AMZD E2E', () => {
     }
     expect(result.isAMZD, 'Should detect as AMZD').toBeTruthy()
 
-    // Assert: bidPrice is null (AMZD is fixed-price, not auction)
-    expect(result.bidPrice, 'AMZD bidPrice must be null (fixed-price)').toBeNull()
+    // Assert: bidPrice is a positive number (listing price)
+    expect(result.bidPrice, 'AMZD bidPrice must be a positive number (listing price)').toBeGreaterThan(0)
+    console.log(`AMZD bid_price: $${result.bidPrice}`)
 
     // Assert: shippingFee is a number >= 0 or null (graceful skip if not found)
     if (result.shippingFee !== null) {

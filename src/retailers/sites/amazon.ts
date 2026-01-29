@@ -44,8 +44,8 @@ export const amazonRetailer: RetailerModule = {
    * Extract metadata from Amazon page
    * Runs in ISOLATED world
    *
-   * Bid price selectors: None - AMZD is fixed-price, not auction
-   * bidPrice always returns null for Amazon Direct listings
+   * Bid price selectors: Extract listing price from Amazon product page
+   * AMZD is fixed-price — listing price used as bid_price
    *
    * See extractShippingFee() for shipping fee selectors
    */
@@ -70,8 +70,6 @@ export const amazonRetailer: RetailerModule = {
     /**
      * Extract shipping fee from DOM
      * Look in delivery/shipping section for shipping cost
-     *
-     * AMZD is fixed-price, not auction - bidPrice always returns null
      *
      * Shipping selectors tried in order:
      * 1. Amazon-specific ID/attribute selectors:
@@ -184,14 +182,44 @@ export const amazonRetailer: RetailerModule = {
       listingName = rawTitle.substring(0, 100) || 'Amazon Listing'
     }
 
-    // Extract shipping fee (AMZD is fixed-price, not auction, so bidPrice is always null)
+    // Extract listing price as bid_price (AMZD is fixed-price, not auction)
+    function extractBidPrice(): number | null {
+      // Primary: .a-price .a-offscreen (most reliable Amazon price element)
+      const offscreen = document.querySelector('.a-price .a-offscreen')
+      if (offscreen?.textContent) {
+        const parsed = parsePrice(offscreen.textContent)
+        if (parsed !== null && parsed > 0) return parsed
+      }
+
+      // Fallback: #corePrice_feature_div .a-price-whole + .a-price-fraction
+      const whole = document.querySelector('.a-price-whole')
+      const fraction = document.querySelector('.a-price-fraction')
+      if (whole?.textContent) {
+        const priceStr = whole.textContent.replace(/[.,\s]/g, '') + '.' + (fraction?.textContent || '00')
+        const parsed = parsePrice(priceStr)
+        if (parsed !== null && parsed > 0) return parsed
+      }
+
+      // Fallback: #priceblock_ourprice, #priceblock_dealprice
+      for (const sel of ['#priceblock_ourprice', '#priceblock_dealprice', '#price']) {
+        const el = document.querySelector(sel)
+        if (el?.textContent) {
+          const parsed = parsePrice(el.textContent)
+          if (parsed !== null && parsed > 0) return parsed
+        }
+      }
+
+      return null
+    }
+
+    const bidPrice = extractBidPrice()
     const shippingFee = extractShippingFee()
 
     return {
       retailer,
       listingName,
-      auctionEndTime: null, // Amazon doesn't have auction end times
-      bidPrice: null, // Amazon Direct is fixed-price, not auction
+      auctionEndTime: null,
+      bidPrice,
       shippingFee,
     }
 
