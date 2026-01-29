@@ -120,10 +120,10 @@ Plans:
   3. BY, JCP auction pages each return correct bid_price and shipping_fee values
   4. QVC bid_price continues working; QVC shipping_fee now returns correct value (not 0)
   5. Playwright E2E tests pass for all 4 Classic retailers (bid_price + shipping_fee each)
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 11-01: Fix B-Stock Classic selectors and E2E verify against live pages
+- [x] 11-01: Fix B-Stock Classic selectors and E2E verify against live pages
 
 #### Phase 12: B-Stock Next.js JSON Fix + E2E
 **Goal**: AMZ, ATT, COSTCO, RC, and TGT return correct bid_price and shipping_fee via `__NEXT_DATA__` — verified E2E
@@ -174,7 +174,7 @@ Phase 10 first (infrastructure). Then Phases 11, 12, 13 can execute in parallel.
 | 8. Metadata DOM Audit | v1.0 | 2/2 | Complete | 2026-01-28 |
 | 9. Raw Manifest Enhancement | v1.0 | 2/2 | Complete | 2026-01-28 |
 | 10. Playwright E2E Infrastructure | v1.1 | 1/1 | Complete | 2026-01-29 |
-| 11. B-Stock Classic Fix + E2E | v1.1 | 0/1 | Not started | - |
+| 11. B-Stock Classic Fix + E2E | v1.1 | 1/1 | Complete | 2026-01-29 |
 | 12. B-Stock Next.js Fix + E2E | v1.1 | 0/2 | Not started | - |
 | 13. AMZD CSV + Metadata Fix + E2E | v1.1 | 0/2 | Not started | - |
 

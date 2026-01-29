@@ -75,14 +75,14 @@ Requirements for metadata fix + AMZD CSV fix + E2E verification milestone.
 
 ### B-Stock Classic Selector Fix
 
-- [ ] **SEL-01**: ACE bid_price extraction returns correct value from live auction page
-- [ ] **SEL-02**: ACE shipping_fee extraction returns correct value from live auction page
-- [ ] **SEL-03**: BY bid_price extraction returns correct value from live auction page
-- [ ] **SEL-04**: BY shipping_fee extraction returns correct value from live auction page
-- [ ] **SEL-05**: JCP bid_price extraction returns correct value from live auction page
-- [ ] **SEL-06**: JCP shipping_fee extraction returns correct value from live auction page
-- [ ] **SEL-07**: QVC bid_price extraction returns correct value (already works — verify)
-- [ ] **SEL-08**: QVC shipping_fee extraction returns correct value from live auction page
+- [x] **SEL-01**: ACE bid_price extraction returns correct value from live auction page
+- [x] **SEL-02**: ACE shipping_fee extraction returns correct value from live auction page
+- [x] **SEL-03**: BY bid_price extraction returns correct value from live auction page
+- [x] **SEL-04**: BY shipping_fee extraction returns correct value from live auction page
+- [x] **SEL-05**: JCP bid_price extraction returns correct value from live auction page
+- [x] **SEL-06**: JCP shipping_fee extraction returns correct value from live auction page
+- [x] **SEL-07**: QVC bid_price extraction returns correct value (already works — verify)
+- [x] **SEL-08**: QVC shipping_fee extraction returns correct value from live auction page
 
 ### B-Stock Next.js Selector Fix
 
@@ -169,9 +169,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | E2E-01 | Phase 10 | Complete |
-| SEL-01 through SEL-08 | Phase 11 | Pending |
-| E2E-02 (Classic) | Phase 11 | Pending |
-| E2E-03 (Classic) | Phase 11 | Pending |
+| SEL-01 through SEL-08 | Phase 11 | Complete |
+| E2E-02 (Classic) | Phase 11 | Complete |
+| E2E-03 (Classic) | Phase 11 | Complete |
 | SEL-09 through SEL-18 | Phase 12 | Pending |
 | E2E-02 (Next.js) | Phase 12 | Pending |
 | E2E-03 (Next.js) | Phase 12 | Pending |
