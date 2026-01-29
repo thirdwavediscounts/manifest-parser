@@ -1,9 +1,11 @@
 import { chromium, type BrowserContext, type Page } from '@playwright/test'
-import { resolve } from 'path'
+import { resolve, dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { mkdtemp } from 'fs/promises'
 import { tmpdir } from 'os'
-import { join } from 'path'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 const DIST_PATH = resolve(__dirname, '../../dist')
 
 /**
