@@ -154,8 +154,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: Fix AMZD CSV parsing (row truncation + column bleeding)
-- [ ] 13-02: Fix AMZD metadata extraction + E2E verify
+- [ ] 13-01-PLAN.md — Fix AMZD CSV parsing (raw line-level append + unified __parsed_extra handling)
+- [ ] 13-02-PLAN.md — Fix AMZD metadata extraction + E2E verify
 
 ## Progress
 
