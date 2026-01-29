@@ -138,8 +138,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: Inspect live Next.js pages and map JSON paths per retailer
-- [ ] 12-02: Implement verified JSON extraction + E2E tests for all 5 Next.js retailers
+- [ ] 12-01-PLAN.md — Create per-retailer JSON path config and refactor bstock.ts extraction
+- [ ] 12-02-PLAN.md — Playwright E2E tests for all 5 Next.js retailers
 
 #### Phase 13: AMZD CSV + Metadata Fix + E2E
 **Goal**: Amazon Direct raw CSV downloads preserve all rows with correct columns, metadata works — verified E2E
