@@ -110,7 +110,7 @@ Requirements for metadata fix + AMZD CSV fix + E2E verification milestone.
 
 ### E2E Verification
 
-- [ ] **E2E-01**: Playwright E2E test infrastructure set up for Chrome extension testing
+- [x] **E2E-01**: Playwright E2E test infrastructure set up for Chrome extension testing
 - [ ] **E2E-02**: Each retailer has a live URL E2E test verifying bid_price extraction
 - [ ] **E2E-03**: Each retailer has a live URL E2E test verifying shipping_fee extraction
 - [ ] **E2E-04**: AMZD E2E test verifying raw CSV row count matches source manifest
@@ -168,7 +168,7 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| E2E-01 | Phase 10 | Pending |
+| E2E-01 | Phase 10 | Complete |
 | SEL-01 through SEL-08 | Phase 11 | Pending |
 | E2E-02 (Classic) | Phase 11 | Pending |
 | E2E-03 (Classic) | Phase 11 | Pending |

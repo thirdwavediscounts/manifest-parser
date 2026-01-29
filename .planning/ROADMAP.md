@@ -108,7 +108,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — Install Playwright, create extension helpers, TL smoke test
+- [x] 10-01-PLAN.md — Install Playwright, create extension helpers, TL smoke test
 
 #### Phase 11: B-Stock Classic Selector Fix + E2E
 **Goal**: ACE, BY, JCP, and QVC return correct bid_price and shipping_fee — verified E2E against live pages
@@ -173,7 +173,7 @@ Phase 10 first (infrastructure). Then Phases 11, 12, 13 can execute in parallel.
 | 7. File Naming Optimization | v1.0 | 2/2 | Complete | 2026-01-28 |
 | 8. Metadata DOM Audit | v1.0 | 2/2 | Complete | 2026-01-28 |
 | 9. Raw Manifest Enhancement | v1.0 | 2/2 | Complete | 2026-01-28 |
-| 10. Playwright E2E Infrastructure | v1.1 | 0/1 | Not started | - |
+| 10. Playwright E2E Infrastructure | v1.1 | 1/1 | Complete | 2026-01-29 |
 | 11. B-Stock Classic Fix + E2E | v1.1 | 0/1 | Not started | - |
 | 12. B-Stock Next.js Fix + E2E | v1.1 | 0/2 | Not started | - |
 | 13. AMZD CSV + Metadata Fix + E2E | v1.1 | 0/2 | Not started | - |
