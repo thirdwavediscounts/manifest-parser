@@ -75,8 +75,10 @@ export const amazonRetailer: RetailerModule = {
      *
      * Shipping selectors tried in order:
      * 1. Amazon-specific ID/attribute selectors:
-     *    - #delivery-message, #deliveryBlockMessage, #mir-layout-DELIVERY_BLOCK
-     *    - [data-csa-c-content-id*="shipping"]
+     *    - #price-shipping-message, #delivery-message, #deliveryBlockMessage
+     *    - #mir-layout-DELIVERY_BLOCK-block, #mir-layout-DELIVERY_BLOCK
+     *    - span[data-csa-c-action="shipFromPrice"], [data-csa-c-content-id*="shipping"]
+     *    - #amazonGlobal_feature_div, #deliveryMessage_feature_div, .shipping-message
      * 2. Generic class selectors:
      *    - [class*="delivery"], [class*="shipping"]
      * 3. Free shipping check: returns 0 if "free shipping/delivery" found (not null)
@@ -87,10 +89,17 @@ export const amazonRetailer: RetailerModule = {
     function extractShippingFee(): number | null {
       // Try Amazon-specific shipping selectors first
       const shippingSelectors = [
+        '#price-shipping-message', // Direct shipping price message
         '#delivery-message', // Amazon delivery info container
-        '[data-csa-c-content-id*="shipping"]', // Amazon analytics-tagged shipping element
         '#deliveryBlockMessage', // Alternative delivery block
+        '#deliveryBlockMessage .a-text-bold', // Bold delivery price
+        '#mir-layout-DELIVERY_BLOCK-block', // MIR layout delivery block
         '#mir-layout-DELIVERY_BLOCK', // MIR layout delivery section
+        'span[data-csa-c-action="shipFromPrice"]', // Analytics-tagged shipping price
+        '[data-csa-c-content-id*="shipping"]', // Amazon analytics-tagged shipping element
+        '#amazonGlobal_feature_div', // Global shipping info
+        '#deliveryMessage_feature_div', // Delivery message feature
+        '.shipping-message', // Shipping message class
         '[class*="delivery"]', // Generic delivery class
         '[class*="shipping"]', // Generic shipping class
       ]
@@ -104,7 +113,9 @@ export const amazonRetailer: RetailerModule = {
             return 0
           }
           // Try to extract shipping price from element text
+          // Also check reverse pattern: "Shipping $X.XX" and "$X.XX delivery/shipping"
           const priceMatch = el.textContent.match(/\$?([\d,]+(?:\.\d{2})?)\s*(?:shipping|delivery)/i)
+            || el.textContent.match(/(?:shipping|delivery)[:\s]*\$?([\d,]+(?:\.\d{2})?)/i)
           if (priceMatch) {
             const parsed = parsePrice(priceMatch[1])
             if (parsed !== null) return parsed
