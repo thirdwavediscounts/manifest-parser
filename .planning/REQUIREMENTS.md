@@ -86,16 +86,16 @@ Requirements for metadata fix + AMZD CSV fix + E2E verification milestone.
 
 ### B-Stock Next.js Selector Fix
 
-- [ ] **SEL-09**: AMZ bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-10**: AMZ shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-11**: ATT bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-12**: ATT shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-13**: COSTCO bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-14**: COSTCO shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-15**: RC bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-16**: RC shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-17**: TGT bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
-- [ ] **SEL-18**: TGT shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-09**: AMZ bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-10**: AMZ shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-11**: ATT bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-12**: ATT shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-13**: COSTCO bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-14**: COSTCO shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-15**: RC bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-16**: RC shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-17**: TGT bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [x] **SEL-18**: TGT shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
 
 ### Amazon Direct Fix
 
@@ -172,9 +172,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | SEL-01 through SEL-08 | Phase 11 | Complete |
 | E2E-02 (Classic) | Phase 11 | Complete |
 | E2E-03 (Classic) | Phase 11 | Complete |
-| SEL-09 through SEL-18 | Phase 12 | Pending |
-| E2E-02 (Next.js) | Phase 12 | Pending |
-| E2E-03 (Next.js) | Phase 12 | Pending |
+| SEL-09 through SEL-18 | Phase 12 | Complete |
+| E2E-02 (Next.js) | Phase 12 | Complete |
+| E2E-03 (Next.js) | Phase 12 | Complete |
 | CSV-01 through CSV-03 | Phase 13 | Pending |
 | SEL-19, SEL-20 | Phase 13 | Pending |
 | E2E-02 (AMZD) | Phase 13 | Pending |

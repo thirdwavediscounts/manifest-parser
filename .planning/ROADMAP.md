@@ -135,11 +135,11 @@ Plans:
   3. COSTCO, RC, ATT auction pages each return correct bid_price and shipping_fee
   4. Per-retailer JSON path mapping exists (not hardcoded single path for all)
   5. Playwright E2E tests pass for all 5 Next.js retailers (bid_price + shipping_fee each)
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 12-01-PLAN.md — Create per-retailer JSON path config and refactor bstock.ts extraction
-- [ ] 12-02-PLAN.md — Playwright E2E tests for all 5 Next.js retailers
+- [x] 12-01-PLAN.md — Create per-retailer JSON path config and refactor bstock.ts extraction
+- [x] 12-02-PLAN.md — Playwright E2E tests for all 5 Next.js retailers
 
 #### Phase 13: AMZD CSV + Metadata Fix + E2E
 **Goal**: Amazon Direct raw CSV downloads preserve all rows with correct columns, metadata works — verified E2E
@@ -175,7 +175,7 @@ Phase 10 first (infrastructure). Then Phases 11, 12, 13 can execute in parallel.
 | 9. Raw Manifest Enhancement | v1.0 | 2/2 | Complete | 2026-01-28 |
 | 10. Playwright E2E Infrastructure | v1.1 | 1/1 | Complete | 2026-01-29 |
 | 11. B-Stock Classic Fix + E2E | v1.1 | 1/1 | Complete | 2026-01-29 |
-| 12. B-Stock Next.js Fix + E2E | v1.1 | 0/2 | Not started | - |
+| 12. B-Stock Next.js Fix + E2E | v1.1 | 2/2 | Complete | 2026-01-29 |
 | 13. AMZD CSV + Metadata Fix + E2E | v1.1 | 0/2 | Not started | - |
 
 ---

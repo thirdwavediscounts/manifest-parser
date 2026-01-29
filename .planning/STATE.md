@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
-**Current focus:** v1.1 — Phase 11 complete, Phases 12-13 ready
+**Current focus:** v1.1 — Phase 12 complete, Phase 13 ready
 
 ## Current Position
 
 Phase: 12 of 13 (B-Stock Next.js JSON Fix E2E)
 Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-29 — Completed 12-02-PLAN.md
+Status: Phase complete (verified — accepted with TGT E2E pass, 4 others skip due to expired URLs)
+Last activity: 2026-01-29 — Phase 12 complete
 
 Progress: [=====================] 87% (21/24 plans)
 
@@ -58,7 +58,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Next.js JSON field paths unverified — Phase 12 requires live page inspection
+- Next.js JSON field paths verified for TGT (E2E pass), AMZ/ATT/COSTCO/RC inferred (same structure, expired URLs)
 - B-Stock Classic shipping requires auth + address — `.auction-data-label` sibling works but label not present without login
 - AMZD CSV pre-processing for embedded newlines not yet implemented
 - Playwright browser lacks proxy switcher — live TL metadata test times out without proxy access
@@ -67,5 +67,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 12-02-PLAN.md, Phase 12 complete
+Stopped at: Phase 12 complete, phase 13 ready
 Resume file: None
