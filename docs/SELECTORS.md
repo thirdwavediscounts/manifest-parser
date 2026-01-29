@@ -34,19 +34,9 @@ Reference documentation for bid price and shipping fee DOM selectors across all 
 
 ### Bid Price Selectors
 
-CSS selectors tried in order:
-```css
-[class*="bid-amount"]
-[class*="current-bid"]
-[class*="winning-bid"]
-[class*="high-bid"]
-[id*="currentBid"]
-[id*="winningBid"]
-```
+**Primary:** `#current_bid_amount` — contains the bid value directly (e.g., "$1,425")
 
-### Bid Price Fallback Patterns
-
-Regex patterns searched in page body text:
+**Fallback** regex patterns searched in page body text:
 ```regex
 /Current\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
 /Winning\s*Bid[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
@@ -56,38 +46,45 @@ Regex patterns searched in page body text:
 
 ### Shipping Fee Selectors
 
-CSS selectors tried in order:
-```css
-[class*="shipping"]
-[class*="freight"]
-[id*="shipping"]
-[id*="freight"]
-```
+**Primary:** `#shipping_total_cost` — container for shipping info
+- Check text for "free" → return `0`
+- `.price` child element contains dollar amount (e.g., "$397.86")
 
-### Shipping Fee Fallback Patterns
-
-Free shipping detection:
+**Fallback** regex patterns searched in page body text:
 ```regex
-/shipping[:\s]*free/i
-/free\s*shipping/i
-```
-
-Shipping amount patterns:
-```regex
+/shipping[:\s]*free/i → return 0
+/free\s*shipping/i → return 0
 /Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
 /Freight[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
 /Estimated\s*Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
 /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
 ```
 
-### Example HTML Snippet
+### DOM Structure (verified 2026-01-29)
 
 ```html
-<!-- Bid price element -->
-<div class="current-bid-amount">$1,250.00</div>
+<!-- Bid price: .auction-data-row contains label + content -->
+<div class="auction-data-row">
+  <div class="auction-data-label">Current bid</div>
+  <div class="auction-data-content">
+    <span id="current_bid_amount">$1,425</span>
+  </div>
+</div>
 
-<!-- Shipping element -->
-<div class="shipping-cost">$150.00</div>
+<!-- Shipping: #shipping_total_cost with .price child -->
+<div class="auction-data-row">
+  <div class="auction-data-label">Shipping Cost</div>
+  <div class="auction-data-content">
+    <div id="shipping_total_cost">
+      <span class="price">$397.86</span>
+    </div>
+  </div>
+</div>
+
+<!-- Free shipping variant (BY example) -->
+<div id="shipping_total_cost">
+  <strong>Free Shipping</strong>
+</div>
 ```
 
 ### Notes
@@ -95,10 +92,11 @@ Shipping amount patterns:
 - Uses B-Stock auction page layout (non-Next.js)
 - Retailer code extracted from URL path: `/acehardware/auction/`
 - Two-step download: Click "Manifest" button, then "Download Full Manifest"
+- `#shipping_total_cost` may not render until address is confirmed; free shipping shown as `<strong>Free Shipping</strong>`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: 2026-01-29 (ACE: bid $1,425 + shipping $397.86; BY: bid $4,500 + free shipping)
 
 ---
 
@@ -110,59 +108,80 @@ Date: _Placeholder for manual verification_
 
 ### Bid Price Selectors
 
-**Primary:** `__NEXT_DATA__` JSON extraction
+**Primary:** `__NEXT_DATA__` JSON extraction (verified 2026-01-29)
 
 Fields checked in order:
+```
+auction.winningBidAmount  ← actual winning bid (dollars, NOT cents)
+auction.startPrice        ← opening bid if no bids yet (dollars)
+```
+
+Legacy fallback fields (not found in current structure but kept for safety):
 ```
 currentBid, winningBid, highBid, currentPrice, bidAmount
 lot.currentBid, lot.winningBid, lot.highBid, lot.currentPrice, lot.bidAmount
 ```
 
 **DOM Fallback** (if `__NEXT_DATA__` unavailable):
-```css
-[data-testid*="bid"]
-[data-testid*="price"]
-[class*="bid-amount"]
-[class*="current-bid"]
-[class*="winning-bid"]
-[class*="CurrentBid"]
-[class*="bidPrice"]
 ```
+Regex: /(?:Current\s*Bid|Buy\s*Now)[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
+```
+
+Also available: `[data-testid="price-details"]` contains "$6,545/ $10.13 per unit"
 
 ### Shipping Fee Selectors
 
-**Primary:** `__NEXT_DATA__` JSON extraction
+**Primary:** `__NEXT_DATA__` JSON extraction (verified 2026-01-29)
 
 Fields checked in order:
 ```
-shippingCost, estimatedShipping, freightCost, shipping, deliveryCost
-lot.shippingCost, lot.estimatedShipping, lot.freightCost, lot.shipping, lot.deliveryCost
+selectedQuote.totalPrice  ← shipping cost in CENTS (divide by 100!)
 ```
 
-**DOM Fallback:**
-```css
-[class*="shipping"]
-[class*="Shipping"]
-[class*="freight"]
-[class*="Freight"]
-[data-testid*="shipping"]
+**Important:** `selectedQuote.totalPrice` is in **cents**. Value 58207 = $582.07.
+
+This maps to the "Shipping" line in the "Shipping & Other Charges" dropdown on the page. The B-Stock Fee is separate and NOT included.
+
+Other `selectedQuote` fields (for reference, not used):
+```
+selectedQuote.totalCarrierCost  ← carrier cost in cents
+selectedQuote.lineHaulPrice     ← line haul in cents
+selectedQuote.basePrice         ← base price in cents
+selectedQuote.totalAccessorials ← accessorial fees in cents
 ```
 
-### Example HTML Snippet
+Legacy fallback fields (not found in current structure but kept for safety):
+```
+shippingCost, estimatedShipping, freightCost, deliveryCost
+lot.shippingCost, lot.estimatedShipping, lot.freightCost, lot.deliveryCost
+```
 
-```html
-<!-- __NEXT_DATA__ script tag (primary source) -->
-<script id="__NEXT_DATA__" type="application/json">
+### Example `__NEXT_DATA__` Structure (verified 2026-01-29)
+
+```json
 {
   "props": {
     "pageProps": {
       "dehydratedState": {
         "queries": [{
-          "queryKey": ["listing"],
+          "queryKey": ["listingDetails", "6972b21217601bac4b79e9da", "JWT-..."],
           "state": {
             "data": {
-              "currentBid": 1250.00,
-              "shippingCost": 150.00,
+              "auction": {
+                "winningBidAmount": 6545,
+                "startPrice": 2500,
+                "numberOfBids": 11,
+                "nextMinBidAmount": 6570
+              },
+              "selectedQuote": {
+                "totalPrice": 58207,
+                "totalCarrierCost": 53895,
+                "lineHaulPrice": 46703,
+                "freightClass": 125
+              },
+              "seller": {
+                "storefront": { "name": "Amazon" }
+              },
               "lot": {
                 "title": "6 Pallets of Home Goods..."
               }
@@ -173,23 +192,25 @@ lot.shippingCost, lot.estimatedShipping, lot.freightCost, lot.shipping, lot.deli
     }
   }
 }
-</script>
-
-<!-- DOM fallback elements -->
-<div class="bid-amount">$1,250.00</div>
-<div class="shipping-cost">$150.00</div>
 ```
+
+### Page DOM Reference
+
+The "Shipping & Other Charges" section has a `[data-testid="toggle-button"]` dropdown that expands to show:
+- **B-Stock Fee:** $262.80 (buyer premium, NOT in selectedQuote)
+- **Shipping:** $582.07 (= `selectedQuote.totalPrice / 100`)
 
 ### Notes
 
 - Uses Next.js `__NEXT_DATA__` script for structured data extraction
 - Seller identified from `seller.storefront.name` or `seller.account.displayName`
 - Auction end time from `datePurchasingEnds`, `auctionEndTime`, or `endTime`
-- Free shipping detected by string "free" in shipping field value
+- **bid amounts are in dollars, shipping amounts are in cents** — inconsistent units in the JSON
+- Config source: `src/retailers/config/nextjs-paths.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: 2026-01-29 (AMZ: bid $6,545 from `auction.winningBidAmount`, shipping $582.07 from `selectedQuote.totalPrice/100`)
 
 ---
 
@@ -230,17 +251,17 @@ Shipping amount patterns:
 /Delivery[:\s]*\$?([\d,]+(?:\.\d{2})?)/i
 ```
 
-### Example HTML Snippet
+### Verified DOM Structure (2026-01-29)
 
 ```html
-<!-- Delivery message element -->
-<div id="delivery-message">
-  <span>FREE Shipping on orders over $25</span>
+<!-- #deliveryBlockMessage contains delivery info -->
+<div id="deliveryBlockMessage">
+  FREE delivery March 16 - 18. Details
 </div>
 
-<!-- Alternative shipping element -->
-<div class="delivery-message">
-  <span>Shipping: $12.99</span>
+<!-- #mir-layout-DELIVERY_BLOCK also contains same info -->
+<div id="mir-layout-DELIVERY_BLOCK">
+  FREE delivery March 16 - 18. Details
 </div>
 ```
 
@@ -248,12 +269,13 @@ Shipping amount patterns:
 
 - **AMZD is fixed-price, not auction - bidPrice always null**
 - Detected by "Units" pattern in title or "lot manifest" text on page
-- Title format: "161 Units (Est 1 pallets) - Returned Damaged- Pc, Electronics And Wireless lot"
-- Price calculation done separately (manifest parsing multiplies by 4.5x)
+- Title format: "1217 Units (Est 3 pallets) - Returned Damaged- Jewelry, Luggage And Apparel lot"
+- `#deliveryBlockMessage` is the most reliable selector — contains "FREE delivery" text
+- `#delivery-message` may not exist on all AMZD pages
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: 2026-01-29 (AMZD: bidPrice=null, shipping=FREE from `#deliveryBlockMessage`)
 
 ---
 
@@ -265,28 +287,22 @@ Date: _Placeholder for manual verification_
 
 ### Bid Price Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace `__NEXT_DATA__` extraction.
-
-**Primary:** `__NEXT_DATA__` JSON fields
-**DOM Fallback:** Standard B-Stock selectors
+Same as [AMZ](#amz): `auction.winningBidAmount` (dollars)
 
 ### Shipping Fee Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace extraction.
-
-### Example HTML Snippet
-
-See [AMZ Example](#amz) - same `__NEXT_DATA__` structure.
+Same as [AMZ](#amz): `selectedQuote.totalPrice` (cents, divide by 100)
 
 ### Notes
 
 - Detected by seller name containing "at&t" (case-insensitive)
 - Retailer code: ATT
 - Condition extracted from `lot.description`
+- Config source: `src/retailers/config/nextjs-paths.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: _Pending E2E verification (same extraction as AMZ, verified 2026-01-29)_
 
 ---
 
@@ -315,7 +331,7 @@ See [ACE Example](#ace) - same DOM structure.
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: 2026-01-29 (BY: bid $4,500 + free shipping)
 
 ---
 
@@ -327,25 +343,22 @@ Date: _Placeholder for manual verification_
 
 ### Bid Price Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace `__NEXT_DATA__` extraction.
+Same as [AMZ](#amz): `auction.winningBidAmount` (dollars)
 
 ### Shipping Fee Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace extraction.
-
-### Example HTML Snippet
-
-See [AMZ Example](#amz) - same `__NEXT_DATA__` structure.
+Same as [AMZ](#amz): `selectedQuote.totalPrice` (cents, divide by 100)
 
 ### Notes
 
 - Detected by seller name containing "costco" (case-insensitive)
 - Uses special naming: B (Box) or P (Pallet) prefix
 - Naming format: `[B/P]_[ProductName]-[Condition]-[PSTTime]`
+- Config source: `src/retailers/config/nextjs-paths.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: _Pending E2E verification (same extraction as AMZ, verified 2026-01-29)_
 
 ---
 
@@ -371,10 +384,11 @@ See [ACE Example](#ace) - same DOM structure.
 
 - Uses B-Stock auction page layout (non-Next.js)
 - Retailer code extracted from URL path: `/jcpenney/auction/`
+- Same DOM structure as ACE — selectors shared via `bstock-auction.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: _Pending E2E verification (same selectors as ACE, verified 2026-01-29)_
 
 ---
 
@@ -400,10 +414,11 @@ See [ACE Example](#ace) - same DOM structure.
 
 - Uses B-Stock auction page layout (non-Next.js)
 - Retailer code extracted from URL path: `/qvc/auction/`
+- Same DOM structure as ACE — selectors shared via `bstock-auction.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: _Pending E2E verification (same selectors as ACE, verified 2026-01-29)_
 
 ---
 
@@ -415,25 +430,22 @@ Date: _Placeholder for manual verification_
 
 ### Bid Price Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace `__NEXT_DATA__` extraction.
+Same as [AMZ](#amz): `auction.winningBidAmount` (dollars)
 
 ### Shipping Fee Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace extraction.
-
-### Example HTML Snippet
-
-See [AMZ Example](#amz) - same `__NEXT_DATA__` structure.
+Same as [AMZ](#amz): `selectedQuote.totalPrice` (cents, divide by 100)
 
 ### Notes
 
 - Detected by seller name containing "royal closeout" (case-insensitive)
 - Retailer code: RC
 - Product name extracted from title pattern "Pallet/Box of [Product]"
+- Config source: `src/retailers/config/nextjs-paths.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: _Pending E2E verification (same extraction as AMZ, verified 2026-01-29)_
 
 ---
 
@@ -445,25 +457,22 @@ Date: _Placeholder for manual verification_
 
 ### Bid Price Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace `__NEXT_DATA__` extraction.
+Same as [AMZ](#amz): `auction.winningBidAmount` (dollars)
 
 ### Shipping Fee Selectors
 
-Same as [AMZ](#amz) - uses B-Stock marketplace extraction.
-
-### Example HTML Snippet
-
-See [AMZ Example](#amz) - same `__NEXT_DATA__` structure.
+Same as [AMZ](#amz): `selectedQuote.totalPrice` (cents, divide by 100)
 
 ### Notes
 
 - Detected by seller name equals "target" (case-insensitive)
 - Retailer code: TGT
 - Categories extracted from title between "Pallets/Boxes of" and "& More"
+- Config source: `src/retailers/config/nextjs-paths.ts`
 
 ### Last Verified
 
-Date: _Placeholder for manual verification_
+Date: _Pending E2E verification (same extraction as AMZ, verified 2026-01-29)_
 
 ---
 

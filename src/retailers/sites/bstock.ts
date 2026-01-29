@@ -134,10 +134,82 @@ export const bstockRetailer: RetailerModule = {
       return null
     }
 
+    // --- Config-driven extraction helpers ---
+    // Mirror of src/retailers/config/nextjs-paths.ts — keep in sync
+    interface _FieldConfig {
+      path: string
+      unit: 'dollars' | 'cents'
+      authRequired: boolean
+    }
+    interface _RetailerPaths {
+      bidPrice: _FieldConfig
+      bidPriceFallback?: _FieldConfig
+      shippingFee: _FieldConfig
+    }
+    const _NEXTJS_PATHS: Record<string, _RetailerPaths> = {
+      AMZ: {
+        bidPrice: { path: 'auction.winningBidAmount', unit: 'dollars', authRequired: false },
+        bidPriceFallback: { path: 'auction.startPrice', unit: 'dollars', authRequired: false },
+        shippingFee: { path: 'selectedQuote.totalPrice', unit: 'cents', authRequired: true },
+      },
+      ATT: {
+        bidPrice: { path: 'auction.winningBidAmount', unit: 'dollars', authRequired: false },
+        bidPriceFallback: { path: 'auction.startPrice', unit: 'dollars', authRequired: false },
+        shippingFee: { path: 'selectedQuote.totalPrice', unit: 'cents', authRequired: true },
+      },
+      COSTCO: {
+        bidPrice: { path: 'auction.winningBidAmount', unit: 'dollars', authRequired: false },
+        bidPriceFallback: { path: 'auction.startPrice', unit: 'dollars', authRequired: false },
+        shippingFee: { path: 'selectedQuote.totalPrice', unit: 'cents', authRequired: true },
+      },
+      RC: {
+        bidPrice: { path: 'auction.winningBidAmount', unit: 'dollars', authRequired: false },
+        bidPriceFallback: { path: 'auction.startPrice', unit: 'dollars', authRequired: false },
+        shippingFee: { path: 'selectedQuote.totalPrice', unit: 'cents', authRequired: true },
+      },
+      TGT: {
+        bidPrice: { path: 'auction.winningBidAmount', unit: 'dollars', authRequired: false },
+        bidPriceFallback: { path: 'auction.startPrice', unit: 'dollars', authRequired: false },
+        shippingFee: { path: 'selectedQuote.totalPrice', unit: 'cents', authRequired: true },
+      },
+    }
+
+    /** Resolve a dot-notation path on an object. Returns undefined if any segment missing. */
+    function _resolvePath(obj: Record<string, unknown>, path: string): unknown {
+      let current: unknown = obj
+      for (const segment of path.split('.')) {
+        if (current == null || typeof current !== 'object') return undefined
+        current = (current as Record<string, unknown>)[segment]
+      }
+      return current
+    }
+
+    /** Extract numeric value using config. Applies unit conversion and sanity checks. */
+    function _extractField(data: Record<string, unknown>, config: _FieldConfig): number | null {
+      const value = _resolvePath(data, config.path)
+      if (typeof value !== 'number') return null
+      if (value < 0) return null
+      if (config.unit === 'cents') {
+        return Math.round((value / 100) * 100) / 100
+      }
+      return value
+    }
+
+    /** Get retailer config key from seller name */
+    function _getRetailerKey(sellerName: string): string | null {
+      const name = (sellerName || '').toLowerCase()
+      if (name === 'amazon') return 'AMZ'
+      if (name.includes('at&t')) return 'ATT'
+      if (name.includes('costco')) return 'COSTCO'
+      if (name.includes('royal closeout')) return 'RC'
+      if (name === 'target') return 'TGT'
+      return null
+    }
+
     /**
      * Extract bid price from __NEXT_DATA__ or DOM
      *
-     * For Next.js sites: Bid is in header area with digits in individual spans
+     * For Next.js sites: Uses config-driven path resolution
      * For Classic sites: Uses .auction-data-label approach
      */
     function extractBidPrice(nextData: Record<string, unknown> | null): number | null {
@@ -146,46 +218,66 @@ export const bstockRetailer: RetailerModule = {
         return extractBidPriceClassic()
       }
 
-      // Try __NEXT_DATA__ fields first - most reliable source on B-Stock marketplace
+      // Try config-driven extraction from __NEXT_DATA__
       if (nextData) {
         const data = nextData as Record<string, unknown>
 
-        // Primary: auction.winningBidAmount (verified 2026-01-29, value in dollars)
-        const auction = data.auction as Record<string, unknown> | undefined
-        if (auction) {
-          if (typeof auction.winningBidAmount === 'number' && auction.winningBidAmount > 0) {
-            return auction.winningBidAmount as number
+        // Determine retailer key for config lookup
+        const seller = data.seller as Record<string, unknown> | undefined
+        const sellerName =
+          ((seller?.storefront as Record<string, unknown>)?.name as string) ||
+          ((seller?.account as Record<string, unknown>)?.displayName as string) || ''
+        const retailerKey = _getRetailerKey(sellerName)
+        const config = retailerKey ? _NEXTJS_PATHS[retailerKey] : null
+
+        if (config) {
+          // Primary: config-driven path
+          const primary = _extractField(data, config.bidPrice)
+          if (primary !== null && primary > 0) return primary
+
+          // Fallback: config-driven fallback path
+          if (config.bidPriceFallback) {
+            const fallback = _extractField(data, config.bidPriceFallback)
+            if (fallback !== null && fallback > 0) return fallback
           }
-          // Fallback within auction object
-          if (typeof auction.startPrice === 'number' && auction.startPrice > 0) {
-            return auction.startPrice as number
+        } else {
+          // Unknown Next.js retailer — try known paths directly
+          const auction = data.auction as Record<string, unknown> | undefined
+          if (auction) {
+            if (typeof auction.winningBidAmount === 'number' && auction.winningBidAmount > 0) {
+              return auction.winningBidAmount as number
+            }
+            if (typeof auction.startPrice === 'number' && auction.startPrice > 0) {
+              return auction.startPrice as number
+            }
           }
         }
 
         // Legacy fallback: top-level or lot-nested fields
         const bidFields = ['currentBid', 'winningBid', 'highBid', 'currentPrice', 'bidAmount']
         for (const field of bidFields) {
-          if (typeof data[field] === 'number') {
-            return data[field] as number
+          const val = data[field]
+          if (typeof val === 'number' && val > 0) {
+            return val
           }
         }
         const lot = data.lot as Record<string, unknown> | undefined
         if (lot) {
           for (const field of bidFields) {
-            if (typeof lot[field] === 'number') {
-              return lot[field] as number
+            const val = lot[field]
+            if (typeof val === 'number' && val > 0) {
+              return val
             }
           }
         }
       }
 
       // DOM fallback for Next.js sites - look for "Current Bid" or "Buy Now" label
-      // Then find associated price (digits may be in individual spans)
       const bodyText = document.body.innerText
       const bidMatch = bodyText.match(/(?:Current\s*Bid|Buy\s*Now)[:\s]*\$?([\d,]+(?:\.\d{2})?)/i)
       if (bidMatch) {
         const parsed = parsePrice(bidMatch[1])
-        if (parsed !== null) return parsed
+        if (parsed !== null && parsed > 0) return parsed
       }
 
       return null
@@ -241,42 +333,57 @@ export const bstockRetailer: RetailerModule = {
      * For Next.js: Look for "Shipping" label in page text or __NEXT_DATA__
      */
     function extractShippingFeeNextJs(nextData: Record<string, unknown> | null): number | null {
-      // Try __NEXT_DATA__ fields first
+      // Try config-driven extraction from __NEXT_DATA__
       if (nextData) {
         const data = nextData as Record<string, unknown>
 
-        // Primary: selectedQuote.totalPrice (verified 2026-01-29, value in CENTS)
-        // This is the "Shipping" line item shown in the "Shipping & Other Charges" dropdown
-        const selectedQuote = data.selectedQuote as Record<string, unknown> | undefined
-        if (selectedQuote && typeof selectedQuote.totalPrice === 'number') {
-          // Convert cents to dollars
-          return (selectedQuote.totalPrice as number) / 100
+        // Determine retailer key for config lookup
+        const seller = data.seller as Record<string, unknown> | undefined
+        const sellerName =
+          ((seller?.storefront as Record<string, unknown>)?.name as string) ||
+          ((seller?.account as Record<string, unknown>)?.displayName as string) || ''
+        const retailerKey = _getRetailerKey(sellerName)
+        const config = retailerKey ? _NEXTJS_PATHS[retailerKey] : null
+
+        if (config) {
+          // Config-driven: use path with unit conversion (cents -> dollars)
+          const result = _extractField(data, config.shippingFee)
+          if (result !== null && result >= 0) return result
+        } else {
+          // Unknown Next.js retailer — try known path directly
+          const selectedQuote = data.selectedQuote as Record<string, unknown> | undefined
+          if (selectedQuote && typeof selectedQuote.totalPrice === 'number') {
+            const val = selectedQuote.totalPrice as number
+            if (val >= 0) return Math.round((val / 100) * 100) / 100
+          }
         }
 
         // Legacy fallback: top-level or lot-nested shipping fields
         const shippingFields = ['shippingCost', 'estimatedShipping', 'freightCost', 'deliveryCost']
         for (const field of shippingFields) {
           if (typeof data[field] === 'number') {
-            return data[field] as number
+            const val = data[field] as number
+            if (val >= 0) return val
           }
           if (typeof data[field] === 'string') {
             const text = (data[field] as string).toLowerCase()
             if (text.includes('free')) return 0
             const parsed = parsePrice(data[field] as string)
-            if (parsed !== null) return parsed
+            if (parsed !== null && parsed >= 0) return parsed
           }
         }
         const lot = data.lot as Record<string, unknown> | undefined
         if (lot) {
           for (const field of shippingFields) {
             if (typeof lot[field] === 'number') {
-              return lot[field] as number
+              const val = lot[field] as number
+              if (val >= 0) return val
             }
             if (typeof lot[field] === 'string') {
               const text = (lot[field] as string).toLowerCase()
               if (text.includes('free')) return 0
               const parsed = parsePrice(lot[field] as string)
-              if (parsed !== null) return parsed
+              if (parsed !== null && parsed >= 0) return parsed
             }
           }
         }
@@ -289,7 +396,7 @@ export const bstockRetailer: RetailerModule = {
       const shipMatch = bodyText.match(/(?:^|\s)Shipping[:\s]*\$?([\d,]+(?:\.\d{2})?)/im)
       if (shipMatch) {
         const parsed = parsePrice(shipMatch[1])
-        if (parsed !== null) return parsed
+        if (parsed !== null && parsed >= 0) return parsed
       }
 
       // Check for free shipping
