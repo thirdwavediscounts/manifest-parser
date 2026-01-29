@@ -108,7 +108,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01: Set up Playwright Chrome extension E2E infrastructure with TL smoke test
+- [ ] 10-01-PLAN.md — Install Playwright, create extension helpers, TL smoke test
 
 #### Phase 11: B-Stock Classic Selector Fix + E2E
 **Goal**: ACE, BY, JCP, and QVC return correct bid_price and shipping_fee — verified E2E against live pages
