@@ -14,10 +14,12 @@ const METADATA_HEADERS = ['auction_url', 'bid_price', 'shipping_fee'] as const
 /**
  * Append auction metadata columns to a raw manifest file.
  *
- * Transforms raw manifest data by appending 3 metadata columns:
- * - auction_url: The source auction URL
- * - bid_price: The winning bid price
- * - shipping_fee: The shipping cost
+ * For CSV files: Uses line-level appending to preserve the original manifest
+ * content byte-for-byte (including embedded newlines in quoted fields, original
+ * quoting, original delimiters). Only appends 3 metadata columns.
+ *
+ * For XLSX/XLS files: Parses with xlsx library and re-serializes as CSV with
+ * metadata columns appended.
  *
  * @param data - Base64 encoded CSV or XLSX data
  * @param fileType - The file type: 'csv', 'xlsx', or 'xls'
@@ -32,75 +34,152 @@ export function appendMetadataToManifest(
   // Step 1: Decode base64 to binary/string
   const binaryString = atob(data)
 
-  // Step 2: Parse based on file type
-  let rows: string[][]
   if (fileType === 'csv') {
-    rows = parseCSV(binaryString)
-  } else {
-    // XLSX or XLS - use xlsx library
-    rows = parseXLSX(binaryString)
+    return appendMetadataToCsvLines(binaryString, metadata)
   }
 
-  // Step 3: Append metadata columns
-  const result = appendMetadataColumns(rows, metadata)
-
-  // Step 4: Generate CSV with BOM
+  // XLSX or XLS - use xlsx library (parse and re-serialize)
+  const rows = parseXLSX(binaryString)
+  const result = appendMetadataColumnsToArrays(rows, metadata)
   return UTF8_BOM + result.map(row => row.map(escapeCSVField).join(',')).join('\n')
 }
 
 /**
- * Parse CSV string into rows of cells
+ * Append metadata columns to a CSV string at the line level.
+ *
+ * Splits the CSV into logical lines (respecting quoted fields with embedded
+ * newlines), then appends metadata columns using the detected source delimiter.
+ * The original content is preserved byte-for-byte.
  */
-function parseCSV(content: string): string[][] {
-  const rows: string[][] = []
-  let currentRow: string[] = []
-  let currentField = ''
-  let inQuotes = false
+function appendMetadataToCsvLines(content: string, metadata: AuctionMetadata): string {
+  // Detect delimiter from first line
+  const delimiter = detectDelimiter(content)
 
-  for (let i = 0; i < content.length; i++) {
-    const char = content[i]
-    const nextChar = content[i + 1]
+  // Split into logical lines respecting quoted fields
+  const lines = splitQuoteAwareLines(content)
 
-    if (inQuotes) {
-      if (char === '"') {
-        if (nextChar === '"') {
-          // Escaped quote
-          currentField += '"'
-          i++ // Skip next quote
-        } else {
-          // End of quoted field
-          inQuotes = false
-        }
-      } else {
-        currentField += char
-      }
+  if (lines.length === 0) {
+    return UTF8_BOM
+  }
+
+  // Use ?? 0 for null values (per CONTEXT.md)
+  const bidPrice = metadata.bidPrice ?? 0
+  const shippingFee = metadata.shippingFee ?? 0
+
+  // Quote auctionUrl if it contains the delimiter
+  const auctionUrl = metadata.auctionUrl
+  const quotedUrl = auctionUrl.includes(delimiter)
+    ? `"${auctionUrl.replace(/"/g, '""')}"`
+    : auctionUrl
+
+  const metaHeader = `${delimiter}${METADATA_HEADERS.join(delimiter)}`
+  const metaFirstRow = `${delimiter}${quotedUrl}${delimiter}${bidPrice}${delimiter}${shippingFee}`
+  const metaEmptyRow = `${delimiter}${delimiter}${delimiter}`
+
+  const result = lines.map((line, index) => {
+    if (index === 0) {
+      // Header line
+      return line + metaHeader
+    } else if (index === 1) {
+      // First data line — append metadata values
+      return line + metaFirstRow
     } else {
-      if (char === '"') {
-        inQuotes = true
-      } else if (char === ',') {
-        currentRow.push(currentField)
-        currentField = ''
-      } else if (char === '\n') {
-        currentRow.push(currentField)
-        rows.push(currentRow)
-        currentRow = []
-        currentField = ''
-      } else if (char === '\r') {
-        // Skip carriage return (handle \r\n)
-        continue
-      } else {
-        currentField += char
+      // Subsequent lines — append empty columns
+      return line + metaEmptyRow
+    }
+  })
+
+  return UTF8_BOM + result.join('\n')
+}
+
+/**
+ * Detect the delimiter used in a CSV string by examining the first line.
+ */
+function detectDelimiter(content: string): string {
+  // Get first line (split on raw \n, not quote-aware — just need first line for detection)
+  const firstLineEnd = content.indexOf('\n')
+  const firstLine = firstLineEnd === -1 ? content : content.substring(0, firstLineEnd)
+
+  const delimiters = [',', '\t', ';', '|']
+  let bestDelimiter = ','
+  let maxCount = 0
+
+  for (const d of delimiters) {
+    // Count occurrences outside of quotes
+    let count = 0
+    let inQuotes = false
+    for (const ch of firstLine) {
+      if (ch === '"') {
+        inQuotes = !inQuotes
+      } else if (ch === d && !inQuotes) {
+        count++
       }
+    }
+    if (count > maxCount) {
+      maxCount = count
+      bestDelimiter = d
     }
   }
 
-  // Don't forget the last field and row
-  if (currentField || currentRow.length > 0) {
-    currentRow.push(currentField)
-    rows.push(currentRow)
+  return bestDelimiter
+}
+
+/**
+ * Split CSV content into logical lines, respecting quoted fields.
+ *
+ * A newline inside a quoted field does NOT start a new logical line.
+ * This preserves embedded newlines in fields like product titles.
+ */
+function splitQuoteAwareLines(content: string): string[] {
+  const lines: string[] = []
+  let current = ''
+  let inQuotes = false
+  let hasEmbeddedNewlines = false
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i]
+
+    if (ch === '"') {
+      inQuotes = !inQuotes
+      current += ch
+    } else if (ch === '\r') {
+      // Handle \r\n — skip \r, the \n will handle the line break
+      if (!inQuotes) {
+        // Skip \r outside quotes (will be handled by \n)
+        if (content[i + 1] === '\n') {
+          continue
+        }
+        // Standalone \r is a line break
+        lines.push(current)
+        current = ''
+      } else {
+        current += ch
+      }
+    } else if (ch === '\n') {
+      if (inQuotes) {
+        // Embedded newline inside quoted field — preserve it
+        hasEmbeddedNewlines = true
+        current += ch
+      } else {
+        // Logical line break
+        lines.push(current)
+        current = ''
+      }
+    } else {
+      current += ch
+    }
   }
 
-  return rows
+  // Don't forget the last line
+  if (current.length > 0) {
+    lines.push(current)
+  }
+
+  if (hasEmbeddedNewlines) {
+    console.warn('raw-metadata: CSV contains embedded newlines in quoted fields — preserved in output')
+  }
+
+  return lines
 }
 
 /**
@@ -138,9 +217,9 @@ function parseXLSX(binaryString: string): string[][] {
 }
 
 /**
- * Append metadata columns to rows
+ * Append metadata columns to array-based rows (used for XLSX/XLS)
  */
-function appendMetadataColumns(rows: string[][], metadata: AuctionMetadata): string[][] {
+function appendMetadataColumnsToArrays(rows: string[][], metadata: AuctionMetadata): string[][] {
   if (rows.length === 0) {
     return []
   }
@@ -161,13 +240,10 @@ function appendMetadataColumns(rows: string[][], metadata: AuctionMetadata): str
 
   return rows.map((row, index) => {
     if (index === 0) {
-      // Header row - append metadata column names
       return [...row, ...METADATA_HEADERS]
     } else if (index === 1) {
-      // First data row - append metadata values
       return [...row, ...metadataValues]
     } else {
-      // Subsequent rows - append empty values
       return [...row, ...emptyMetadata]
     }
   })
