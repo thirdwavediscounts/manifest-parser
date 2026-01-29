@@ -12,7 +12,7 @@ A Chrome extension that downloads and processes liquidation auction manifests fr
 
 ### Validated
 
-<!-- Shipped and confirmed valuable — v1 milestone -->
+<!-- Shipped and confirmed valuable -->
 
 - ✓ Load auction URLs from Google Sheets — v1
 - ✓ Process multiple URLs in batch — v1
@@ -30,31 +30,16 @@ A Chrome extension that downloads and processes liquidation auction manifests fr
 - ✓ Smart file naming with abbreviation — v1
 - ✓ Raw manifest metadata appending — v1
 - ✓ TL metadata extraction (bid_price + shipping_fee) — v1
+- ✓ Metadata extraction for all 11 retailers (bid_price + shipping_fee) — v1.1
+- ✓ AMZD raw CSV preserves all rows (no truncation from embedded newlines) — v1.1
+- ✓ AMZD columns don't bleed together (__parsed_extra handling) — v1.1
+- ✓ Raw mode pass-through with line-level metadata append — v1.1
+- ✓ Playwright E2E test infrastructure for Chrome extension — v1.1
+- ✓ E2E verification of metadata extraction per retailer — v1.1
 
 ### Active
 
-<!-- v1.1 — Fix metadata extraction and AMZD parsing, E2E verify all retailers -->
-
-**Bug Fixes:**
-- [ ] AMZD raw CSV download truncated (1000+ rows → ~600) — rows lost during download/extraction
-- [ ] AMZD raw CSV has columns bleeding together — data from multiple fields merged into single cells
-- [ ] Metadata values showing 0 for most retailers when they should have real values
-
-**Metadata Extraction Fixes (bid_price + shipping_fee per retailer):**
-- [ ] TGT — bid_price and shipping_fee both broken (returning 0)
-- [ ] RC — bid_price and shipping_fee both broken (returning 0)
-- [ ] QVC — shipping_fee broken (bid_price works)
-- [ ] COSTCO (B/P) — bid_price and shipping_fee both broken (returning 0)
-- [ ] JCP — bid_price and shipping_fee both broken (returning 0)
-- [ ] BY — bid_price and shipping_fee both broken (returning 0)
-- [ ] AMZ — bid_price and shipping_fee both broken (returning 0)
-- [ ] ACE — shipping_fee broken (bid_price works)
-- [ ] AMZD — bid_price and shipping_fee both broken (returning 0)
-
-**E2E Verification:**
-- [ ] Each retailer verified against live auction pages with correct DOM selectors
-- [ ] Metadata extraction confirmed producing correct values per retailer
-- [ ] Raw download verified to preserve all manifest rows
+(No active requirements — next milestone not yet defined)
 
 ### Out of Scope
 
@@ -62,16 +47,17 @@ A Chrome extension that downloads and processes liquidation auction manifests fr
 - Mobile app — Chrome extension only
 - Non-auction retailers — focus on liquidation auctions
 - Real-time price tracking — single snapshot at processing time
-- Unified format fixes — focus on raw mode and metadata in this milestone
 
 ## Context
 
 **Existing Codebase:**
 - TypeScript Chrome extension (Manifest V3)
+- 13,145 lines of TypeScript across src/ and tests/
 - Plugin-based retailer system with registry pattern
 - Per-retailer extractors handle DOM scraping for metadata
 - CSV/XLSX parsing via papaparse and xlsx libraries
-- v1 milestone complete (9 phases, 17 plans)
+- Playwright E2E test suite for live auction page verification
+- v1.0 shipped (9 phases, 17 plans), v1.1 shipped (4 phases, 6 plans)
 
 **Retailer Codes:**
 ACE, AMZ, AMZD, ATT, COSTCO (B or P), BY, JCP, QVC, RC, TGT, TL
@@ -80,36 +66,40 @@ ACE, AMZ, AMZD, ATT, COSTCO (B or P), BY, JCP, QVC, RC, TGT, TL
 | Retailer | bid_price | shipping_fee |
 |----------|-----------|--------------|
 | TL | ✓ Working | ✓ Working |
-| ACE | ✓ Working | ✗ Returns 0 |
-| QVC | ✓ Working | ✗ Returns 0 |
-| TGT | ✗ Returns 0 | ✗ Returns 0 |
-| RC | ✗ Returns 0 | ✗ Returns 0 |
-| COSTCO | ✗ Returns 0 | ✗ Returns 0 |
-| JCP | ✗ Returns 0 | ✗ Returns 0 |
-| BY | ✗ Returns 0 | ✗ Returns 0 |
-| AMZ | ✗ Returns 0 | ✗ Returns 0 |
-| AMZD | ✗ Returns 0 | ✗ Returns 0 |
-
-**Known AMZD Issues:**
-- Raw CSV download truncated — only ~600 of 1000+ rows
-- Column data bleeding together in downloaded CSV (visible in screenshot: merged price/qty fields)
+| ACE | ✓ Working | ✓ Fixed (deferred behind auth) |
+| QVC | ✓ Working | ✓ Fixed (deferred behind auth) |
+| TGT | ✓ Fixed (__NEXT_DATA__) | ✓ Fixed (auth-required) |
+| RC | ✓ Fixed (__NEXT_DATA__) | ✓ Fixed (__NEXT_DATA__) |
+| COSTCO | ✓ Fixed (__NEXT_DATA__) | ✓ Fixed (__NEXT_DATA__) |
+| JCP | ✓ Working | ✓ Fixed (deferred behind auth) |
+| BY | ✓ Working | ✓ Fixed (deferred behind auth) |
+| AMZ | ✓ Fixed (__NEXT_DATA__) | ✓ Fixed (__NEXT_DATA__) |
+| AMZD | ✓ null (fixed-price) | ✓ Fixed (13 selectors) |
+| ATT | ✓ Fixed (__NEXT_DATA__) | ✓ Fixed (__NEXT_DATA__) |
 
 ## Constraints
 
 - **Tech stack**: TypeScript, Chrome Extension Manifest V3, existing architecture
 - **Compatibility**: Must work with existing URL processing flow and ZIP export
 - **No breaking changes**: Raw file download and unified format must continue working
-- **Testing**: Live auction URLs available for E2E verification
+- **Testing**: Playwright E2E tests with live auction URLs; URLs expire so tests skip gracefully
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Separate CSVs per manifest, not combined | User preference — easier to track per-auction | ✓ Good |
-| Right-anchor parsing for AMZD | Most reliable approach for misaligned columns | ⚠️ Revisit — rows still broken |
-| Multiply AMZD lot item price by 4.5 | Domain knowledge — accurate unit retail calculation | — Pending |
+| Right-anchor parsing for AMZD | Most reliable approach for misaligned columns | ✓ Good (fixed with __parsed_extra spread) |
+| Multiply AMZD lot item price by 4.5 | Domain knowledge — accurate unit retail calculation | ✓ Good |
 | Auction metadata only on first row | Reduces redundancy, cleaner output | ✓ Good |
-| E2E verify with live URLs | Real DOM structures change; need current selectors | — Pending |
+| E2E verify with live URLs | Real DOM structures change; need current selectors | ✓ Good (tests skip on expired URLs) |
+| .pw.test.ts suffix for Playwright | Coexists with vitest without conflicts | ✓ Good |
+| page.evaluate() for metadata testing | Direct DOM access, mirrors production extraction | ✓ Good |
+| Classic shipping deferred behind login | .auction-data-label sibling works when authenticated | ✓ Good (returns null unauthenticated) |
+| AMZD bid_price returns null | Fixed-price, not auction — null distinguishes from $0 | ✓ Good |
+| Line-level raw CSV append | Preserves embedded newlines without re-parsing | ✓ Good |
+| Config-driven __NEXT_DATA__ paths | Per-retailer JSON paths, not hardcoded single path | ✓ Good |
+| Inline config mirror (ISOLATED world) | Extension extractMetadata() can't import modules | ✓ Good (documented) |
 
 ---
-*Last updated: 2026-01-29 after v1.1 milestone initialization*
+*Last updated: 2026-01-29 after v1.1 milestone completion*
