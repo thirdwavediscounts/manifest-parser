@@ -3,9 +3,9 @@
 **Defined:** 2026-01-27
 **Core Value:** Transform messy, inconsistent manifests from multiple retailers into a clean, unified CSV format
 
-## v1 Requirements
+## v1 Requirements (Complete)
 
-Requirements for unified manifest format feature. Each maps to roadmap phases.
+All v1 requirements shipped and validated. See v1 traceability below.
 
 ### Unified Output Format
 
@@ -69,6 +69,52 @@ Requirements for unified manifest format feature. Each maps to roadmap phases.
 - [x] **RAW-02**: Metadata values appear only on first data row (subsequent rows empty for these columns)
 - [x] **RAW-03**: Works for both tab-processed manifests and direct URL downloads
 
+## v1.1 Requirements
+
+Requirements for metadata fix + AMZD CSV fix + E2E verification milestone.
+
+### B-Stock Classic Selector Fix
+
+- [ ] **SEL-01**: ACE bid_price extraction returns correct value from live auction page
+- [ ] **SEL-02**: ACE shipping_fee extraction returns correct value from live auction page
+- [ ] **SEL-03**: BY bid_price extraction returns correct value from live auction page
+- [ ] **SEL-04**: BY shipping_fee extraction returns correct value from live auction page
+- [ ] **SEL-05**: JCP bid_price extraction returns correct value from live auction page
+- [ ] **SEL-06**: JCP shipping_fee extraction returns correct value from live auction page
+- [ ] **SEL-07**: QVC bid_price extraction returns correct value (already works — verify)
+- [ ] **SEL-08**: QVC shipping_fee extraction returns correct value from live auction page
+
+### B-Stock Next.js Selector Fix
+
+- [ ] **SEL-09**: AMZ bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-10**: AMZ shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-11**: ATT bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-12**: ATT shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-13**: COSTCO bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-14**: COSTCO shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-15**: RC bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-16**: RC shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-17**: TGT bid_price extraction returns correct value via verified __NEXT_DATA__ JSON path
+- [ ] **SEL-18**: TGT shipping_fee extraction returns correct value via verified __NEXT_DATA__ JSON path
+
+### Amazon Direct Fix
+
+- [ ] **SEL-19**: AMZD shipping_fee extraction returns correct value from Amazon product page
+- [ ] **SEL-20**: AMZD bid_price correctly returns null (fixed-price, not auction)
+
+### AMZD CSV Parsing Fix
+
+- [ ] **CSV-01**: AMZD raw CSV download preserves all rows (no truncation from embedded newlines)
+- [ ] **CSV-02**: AMZD columns do not bleed together (right-anchor extraction includes __parsed_extra data)
+- [ ] **CSV-03**: Raw mode passes through manifest data without cleaning/sorting — only appends 3 metadata columns
+
+### E2E Verification
+
+- [ ] **E2E-01**: Playwright E2E test infrastructure set up for Chrome extension testing
+- [ ] **E2E-02**: Each retailer has a live URL E2E test verifying bid_price extraction
+- [ ] **E2E-03**: Each retailer has a live URL E2E test verifying shipping_fee extraction
+- [ ] **E2E-04**: AMZD E2E test verifying raw CSV row count matches source manifest
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -83,6 +129,11 @@ Deferred to future release. Tracked but not in current roadmap.
 
 - **RET-V2-01**: Support for additional B-Stock sub-retailers as discovered
 
+### Extraction Improvements
+
+- **EXT-V2-01**: Return null instead of 0 when extraction fails (distinguish failure from $0)
+- **EXT-V2-02**: B-Stock fee extraction (#buyersPremiumLabelResult)
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -92,10 +143,12 @@ Deferred to future release. Tracked but not in current roadmap.
 | Non-auction retailers | Focus on liquidation auctions |
 | Real-time price tracking | Single snapshot at processing time |
 | Historical data storage | User manages their own files |
+| Unified format fixes | v1.1 focuses on raw mode and metadata |
+| Data cleaning/sorting in raw mode | Raw mode passes through as-is with metadata appended |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+### v1 (Complete)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -103,46 +156,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-02 | Phase 1 | Complete |
 | OUT-03 | Phase 6 | Complete |
 | OUT-04 | Phase 1 | Complete |
-| MAP-01 | Phase 2 | Complete |
-| MAP-02 | Phase 2 | Complete |
-| MAP-03 | Phase 3 | Complete |
-| MAP-04 | Phase 2 | Complete |
-| MAP-05 | Phase 2 | Complete |
-| MAP-06 | Phase 2 | Complete |
-| MAP-07 | Phase 2 | Complete |
-| MAP-08 | Phase 2 | Complete |
-| MAP-09 | Phase 2 | Complete |
-| MAP-10 | Phase 2 | Complete |
-| MAP-11 | Phase 2 | Complete |
-| META-01 | Phase 5 | Complete |
-| META-02 | Phase 5 | Complete |
-| META-03 | Phase 5 | Complete |
-| PROC-01 | Phase 4 | Complete |
-| PROC-02 | Phase 4 | Complete |
-| PROC-03 | Phase 4 | Complete |
-| PROC-04 | Phase 4 | Complete |
-| PROC-05 | Phase 4 | Complete |
-| AMZD-01 | Phase 3 | Complete |
-| AMZD-02 | Phase 3 | Complete |
-| AMZD-03 | Phase 3 | Complete |
-| AMZD-04 | Phase 3 | Complete |
-| AMZD-05 | Phase 3 | Complete |
-| AMZD-06 | Phase 3 | Complete |
-| NAME-01 | Phase 7 | Complete |
-| NAME-02 | Phase 7 | Complete |
-| NAME-03 | Phase 7 | Complete |
-| NAME-04 | Phase 7 | Complete |
-| META-04 | Phase 8 | Complete |
-| META-05 | Phase 8 | Complete |
-| RAW-01 | Phase 9 | Complete |
-| RAW-02 | Phase 9 | Complete |
-| RAW-03 | Phase 9 | Complete |
+| MAP-01 through MAP-11 | Phases 2-3 | Complete |
+| META-01 through META-03 | Phase 5 | Complete |
+| PROC-01 through PROC-05 | Phase 4 | Complete |
+| AMZD-01 through AMZD-06 | Phase 3 | Complete |
+| NAME-01 through NAME-04 | Phase 7 | Complete |
+| META-04, META-05 | Phase 8 | Complete |
+| RAW-01 through RAW-03 | Phase 9 | Complete |
+
+### v1.1 (Active)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SEL-01 through SEL-08 | TBD | Pending |
+| SEL-09 through SEL-18 | TBD | Pending |
+| SEL-19, SEL-20 | TBD | Pending |
+| CSV-01 through CSV-03 | TBD | Pending |
+| E2E-01 through E2E-04 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 38 total
-- Mapped to phases: 38
-- Unmapped: 0
+- v1 requirements: 38 total — all complete
+- v1.1 requirements: 27 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 27
 
 ---
 *Requirements defined: 2026-01-27*
-*Last updated: 2026-01-28 — All v1 requirements complete*
+*Last updated: 2026-01-29 after v1.1 milestone initialization*
