@@ -200,8 +200,12 @@ export const techLiquidatorsRetailer: RetailerModule = {
     // Extract condition abbreviation
     const conditionAbbrev = extractConditionAbbrev(bodyText)
 
-    // Extract PST military time from "(XXXX)" format on page
-    const pstTime = extractPstTime(bodyText)
+    // Extract auction end time from data-timestamp attribute (UTC)
+    const endTimeUtc =
+      document.querySelector('.bid-box__timer')?.getAttribute('data-timestamp') || null
+
+    // Convert UTC to PST military time for filename, and PST ISO string for auctionEndTime
+    const { pstTime, auctionEndTime } = convertToPst(endTimeUtc)
 
     // Build listing name: "Title Condition Time"
     // Filename format: TL_<listingName>.csv (max 50 chars)
@@ -213,7 +217,7 @@ export const techLiquidatorsRetailer: RetailerModule = {
       title = title.substring(0, maxTitleLen).trim()
     }
 
-    // Example: "Electric Transportation Accessories UR 1139"
+    // Example: "Tablet Accessories Apple S 0810"
     const parts = [title, conditionAbbrev, pstTime].filter((p) => p.length > 0)
     const listingName = parts.join(' ') || 'TechLiquidators Listing'
 
@@ -224,7 +228,7 @@ export const techLiquidatorsRetailer: RetailerModule = {
     return {
       retailer: 'TL',
       listingName,
-      auctionEndTime: null,
+      auctionEndTime,
       bidPrice,
       shippingFee,
     }
@@ -278,20 +282,38 @@ export const techLiquidatorsRetailer: RetailerModule = {
       return ''
     }
 
-    function extractPstTime(text: string): string {
-      // TechLiquidators shows: "End time in PST: 11:39 AM (1139 military)"
-      // Extract the military time from parentheses
-      const militaryMatch = text.match(/PST[^(]*\((\d{3,4})\s*(?:military)?\)/i)
-      if (militaryMatch) {
-        return militaryMatch[1] // e.g., "1139"
-      }
+    /**
+     * Convert UTC timestamp to PST military time (4 digits) and PST ISO string
+     * Uses PST (UTC-8) year-round (same DST caveat as B-Stock)
+     */
+    function convertToPst(utcTime: string | null): { pstTime: string; auctionEndTime: string | null } {
+      if (!utcTime) return { pstTime: '', auctionEndTime: null }
 
-      // Fallback: try to extract from "PST X:XX AM/PM" format
-      const pstMatch = text.match(/PST\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i)
-      if (pstMatch) {
-        return `${pstMatch[1]}${pstMatch[2]}`
+      try {
+        const date = new Date(utcTime)
+        if (isNaN(date.getTime())) return { pstTime: '', auctionEndTime: null }
+
+        // Convert to PST (UTC-8)
+        const pstMs = date.getTime() - 8 * 60 * 60 * 1000
+        const pstDate = new Date(pstMs)
+
+        const pstHours = pstDate.getUTCHours()
+        const pstMinutes = pstDate.getUTCMinutes()
+        const pstTime = `${pstHours.toString().padStart(2, '0')}${pstMinutes.toString().padStart(2, '0')}`
+
+        // Build PST ISO string (e.g., "2026-02-10T08:10:00-08:00")
+        const y = pstDate.getUTCFullYear()
+        const m = (pstDate.getUTCMonth() + 1).toString().padStart(2, '0')
+        const d = pstDate.getUTCDate().toString().padStart(2, '0')
+        const h = pstHours.toString().padStart(2, '0')
+        const min = pstMinutes.toString().padStart(2, '0')
+        const s = pstDate.getUTCSeconds().toString().padStart(2, '0')
+        const auctionEndTime = `${y}-${m}-${d}T${h}:${min}:${s}-08:00`
+
+        return { pstTime, auctionEndTime }
+      } catch {
+        return { pstTime: '', auctionEndTime: null }
       }
-      return ''
     }
   },
 
