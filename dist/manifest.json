@@ -34,28 +34,67 @@
     "default_popup": "src/popup/index.html"
   },
   "background": {
-    "service_worker": "src/background/service-worker.ts",
+    "service_worker": "service-worker-loader.js",
     "type": "module"
   },
   "content_scripts": [
+    {
+      "js": [
+        "assets/bstock.ts-loader-XrbHlRvG.js"
+      ],
+      "matches": [
+        "*://*.bstock.com/*",
+        "*://*.bstockauctions.com/*"
+      ]
+    },
+    {
+      "js": [
+        "assets/techliquidators.ts-loader-DOS1FxPc.js"
+      ],
+      "matches": [
+        "*://*.techliquidators.com/*"
+      ]
+    },
+    {
+      "js": [
+        "assets/amazon.ts-loader-CakEYEp8.js"
+      ],
+      "matches": [
+        "*://*.amazon.com/*"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
     {
       "matches": [
         "*://*.bstock.com/*",
         "*://*.bstockauctions.com/*"
       ],
-      "js": ["src/content/sites/bstock.ts"]
+      "resources": [
+        "assets/detector-Bh9ZqayP.js",
+        "assets/bstock.ts-UnHueT6N.js"
+      ],
+      "use_dynamic_url": false
     },
     {
       "matches": [
         "*://*.techliquidators.com/*"
       ],
-      "js": ["src/content/sites/techliquidators.ts"]
+      "resources": [
+        "assets/detector-Bh9ZqayP.js",
+        "assets/techliquidators.ts-DK2rgFmW.js"
+      ],
+      "use_dynamic_url": false
     },
     {
       "matches": [
         "*://*.amazon.com/*"
       ],
-      "js": ["src/content/sites/amazon.ts"]
+      "resources": [
+        "assets/detector-Bh9ZqayP.js",
+        "assets/amazon.ts-BrRjC2fq.js"
+      ],
+      "use_dynamic_url": false
     }
   ]
 }

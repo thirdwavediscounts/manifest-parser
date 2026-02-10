@@ -1,0 +1,76 @@
+{
+  "../../@crx/manifest": {
+    "file": "assets/crx-manifest.js-DBVzgMyz.js",
+    "name": "crx-manifest.js",
+    "src": "../../@crx/manifest",
+    "isEntry": true
+  },
+  "_detector-Bh9ZqayP.js": {
+    "file": "assets/detector-Bh9ZqayP.js",
+    "name": "detector"
+  },
+  "_proxy-config-OqE8FvQS.js": {
+    "file": "assets/proxy-config-OqE8FvQS.js",
+    "name": "proxy-config"
+  },
+  "amazon.ts-loader.js": {
+    "file": "assets/amazon.ts-loader-CakEYEp8.js",
+    "src": "amazon.ts-loader.js"
+  },
+  "bstock.ts-loader.js": {
+    "file": "assets/bstock.ts-loader-XrbHlRvG.js",
+    "src": "bstock.ts-loader.js"
+  },
+  "src/background/service-worker.ts": {
+    "file": "assets/service-worker.ts-CQl5zPlz.js",
+    "name": "service-worker.ts",
+    "src": "src/background/service-worker.ts",
+    "isEntry": true,
+    "imports": [
+      "_proxy-config-OqE8FvQS.js"
+    ]
+  },
+  "src/content/sites/amazon.ts": {
+    "file": "assets/amazon.ts-BrRjC2fq.js",
+    "name": "amazon.ts",
+    "src": "src/content/sites/amazon.ts",
+    "isEntry": true,
+    "imports": [
+      "_detector-Bh9ZqayP.js"
+    ]
+  },
+  "src/content/sites/bstock.ts": {
+    "file": "assets/bstock.ts-UnHueT6N.js",
+    "name": "bstock.ts",
+    "src": "src/content/sites/bstock.ts",
+    "isEntry": true,
+    "imports": [
+      "_detector-Bh9ZqayP.js"
+    ]
+  },
+  "src/content/sites/techliquidators.ts": {
+    "file": "assets/techliquidators.ts-DK2rgFmW.js",
+    "name": "techliquidators.ts",
+    "src": "src/content/sites/techliquidators.ts",
+    "isEntry": true,
+    "imports": [
+      "_detector-Bh9ZqayP.js"
+    ]
+  },
+  "src/popup/index.html": {
+    "file": "assets/popup-NS3zBIjW.js",
+    "name": "popup",
+    "src": "src/popup/index.html",
+    "isEntry": true,
+    "imports": [
+      "_proxy-config-OqE8FvQS.js"
+    ],
+    "css": [
+      "assets/popup-CC26C2k_.css"
+    ]
+  },
+  "techliquidators.ts-loader.js": {
+    "file": "assets/techliquidators.ts-loader-DOS1FxPc.js",
+    "src": "techliquidators.ts-loader.js"
+  }
+}
